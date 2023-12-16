@@ -23,6 +23,26 @@ class Notify(threading.Thread):
         self.LOCK.release()
 
 
+class ObserveCenter(Observer):
+    def __init__(self):
+        super().__init__()
+        self._start_time = None
+
+    def start(self):
+        self._start_time = datetime.now()
+        super().start()
+
+    def stop(self):
+        self._start_time = None
+        super().stop()
+
+    def get_run_time(self):
+        if self._start_time is None:
+            return -1
+
+        return (datetime.now() - self._start_time).seconds
+
+
 class FileEventHandler(FileSystemEventHandler):
     def __init__(self):
         self._alert_sound = None
@@ -67,7 +87,7 @@ class FileEventHandler(FileSystemEventHandler):
 
 if __name__ == "__main__":
     import time
-    observer = Observer()
+    observer = ObserveCenter()
     event_handler = FileEventHandler()
     event_handler.set_sound("10-seconds-loop-2-97528.mp3")
     event_handler.set_delay(5)
@@ -76,6 +96,7 @@ if __name__ == "__main__":
     try:
         while True:
             time.sleep(1)
+            print(observer.get_run_time())
 
     except KeyboardInterrupt:
         observer.stop()

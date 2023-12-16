@@ -1,16 +1,30 @@
 import sys
+from os.path import basename
 
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal, QObject
 from time import sleep
 from datetime import timedelta
 
 import alert
 
 
+class FileHandler(alert.FileEventHandler, QObject):
+    DELETED = pyqtSignal(object)
+
+    def __init__(self):
+        alert.FileEventHandler.__init__(self)
+        QObject.__init__(self)
+
+    def on_deleted(self, event):
+        super().on_deleted(event)
+        self.DELETED.emit(event)
+
+
 class WatchFolder(QThread):
     WATCHING = pyqtSignal(str)
     FINISHED = pyqtSignal(str)
+    NOTIFY = pyqtSignal(str)
 
     def __init__(self, folder_path, alert_sound):
         super().__init__()
@@ -21,8 +35,9 @@ class WatchFolder(QThread):
     def run(self):
         self._running = True
         ob = alert.ObserveCenter()
-        handler = alert.FileEventHandler()
+        handler = FileHandler()
         handler.set_sound(self._alert)
+        handler.DELETED.connect(self.emit_notification)
         ob.schedule(handler, self._folder, True)
         ob.start()
         while self._running:
@@ -37,6 +52,9 @@ class WatchFolder(QThread):
     def stop(self):
         self._running = False
 
+    def emit_notification(self, event):
+        self.NOTIFY.emit(basename(event.src_path))
+
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -46,6 +64,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._watch = WatchFolder("/home/lak/Documents/test", "10-seconds-loop-2-97528.mp3")
         self._watch.WATCHING.connect(self.update_status_bar)
         self._watch.FINISHED.connect(self.update_plain_text)
+        self._watch.NOTIFY.connect(self.update_plain_text)
 
         self.pushButton_start.clicked.connect(self.btn_start_clicked)
         self.pushButton_stop.clicked.connect(self.btn_stop_clicked)

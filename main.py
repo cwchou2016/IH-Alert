@@ -3,21 +3,35 @@ import sys
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import QThread, pyqtSignal
 from time import sleep
+from datetime import timedelta
+
+import alert
 
 
 class WatchFolder(QThread):
     WATCHING = pyqtSignal(str)
     FINISHED = pyqtSignal(str)
 
-    def __init__(self):
+    def __init__(self, folder_path, alert_sound):
         super().__init__()
         self._running = False
+        self._folder = folder_path
+        self._alert = alert_sound
 
     def run(self):
         self._running = True
+        ob = alert.ObserveCenter()
+        handler = alert.FileEventHandler()
+        handler.set_sound(self._alert)
+        ob.schedule(handler, self._folder, True)
+        ob.start()
         while self._running:
-            self.WATCHING.emit("running")
+            self.WATCHING.emit(f"Running time: {timedelta(seconds=ob.get_run_time())}")
             sleep(1)
+
+        ob.stop()
+        ob.join()
+
         self.FINISHED.emit("finished")
 
     def stop(self):
@@ -29,8 +43,8 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi("mainWindow.ui", self)
 
-        self._watch = WatchFolder()
-        self._watch.WATCHING.connect(self.update_plain_text)
+        self._watch = WatchFolder("/home/lak/Documents/test", "10-seconds-loop-2-97528.mp3")
+        self._watch.WATCHING.connect(self.update_status_bar)
         self._watch.FINISHED.connect(self.update_plain_text)
 
         self.pushButton_start.clicked.connect(self.btn_start_clicked)

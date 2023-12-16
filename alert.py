@@ -1,6 +1,20 @@
+import threading
+
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from datetime import datetime
+from playsound import playsound
+
+
+class Notify(threading.Thread):
+    def __init__(self, sound):
+        super().__init__()
+        self._sound = sound
+
+    def run(self):
+        playsound("10-seconds-loop-2-97528.mp3")
+        print("提示音效播放中，請勿關閉視窗")
+        print("若要取消，請按 CTRL+C")
 
 
 class FileEventHandler(FileSystemEventHandler):
@@ -24,6 +38,8 @@ class FileEventHandler(FileSystemEventHandler):
             print(f"{datetime.now()}: directory deleted:{event.src_path}")
         else:
             print(f"{datetime.now()}: file deleted:{event.src_path}")
+
+        Notify("").start()
 
     def on_modified(self, event):
         if event.is_directory:

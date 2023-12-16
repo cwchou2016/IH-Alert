@@ -70,6 +70,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.pushButton_start.clicked.connect(self.btn_start_clicked)
         self.pushButton_stop.clicked.connect(self.btn_stop_clicked)
 
+        self.btn_start_clicked()
+
         self.update()
 
     def btn_start_clicked(self):
@@ -91,6 +93,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def update_event_log(self, msg):
         self.update_plain_text(f"{datetime.now()}: {msg}")
+
+    def update(self):
+        if self._watch.isRunning():
+            self.pushButton_start.hide()
+            self.pushButton_stop.show()
+        else:
+            self.pushButton_start.show()
+            self.pushButton_stop.hide()
+
+        super().update()
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ from os.path import basename
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import QThread, pyqtSignal, QObject
 from time import sleep
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import alert
 
@@ -47,7 +47,7 @@ class WatchFolder(QThread):
         ob.stop()
         ob.join()
 
-        self.FINISHED.emit("finished")
+        self.FINISHED.emit("Stopped")
 
     def stop(self):
         self._running = False
@@ -63,8 +63,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._watch = WatchFolder("/home/lak/Documents/test", "10-seconds-loop-2-97528.mp3")
         self._watch.WATCHING.connect(self.update_status_bar)
-        self._watch.FINISHED.connect(self.update_plain_text)
-        self._watch.NOTIFY.connect(self.update_plain_text)
+        self._watch.FINISHED.connect(self.update_event_log)
+        self._watch.FINISHED.connect(self.update_status_bar)
+        self._watch.NOTIFY.connect(self.update_event_log)
 
         self.pushButton_start.clicked.connect(self.btn_start_clicked)
         self.pushButton_stop.clicked.connect(self.btn_stop_clicked)
@@ -72,14 +73,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update()
 
     def btn_start_clicked(self):
-        self.update_status_bar("start clicked")
+        self.update_status_bar("Starting")
         self._watch.start()
-        self.update_plain_text("start clicked")
+        self.update_event_log("Notification is running")
 
     def btn_stop_clicked(self):
         self._watch.stop()
-        self.update_status_bar("stop clicked")
-        self.update_plain_text("stop clicked")
+        self.update_status_bar("Stopping")
 
     def update_status_bar(self, msg):
         self.statusBar().showMessage(msg)
@@ -88,6 +88,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def update_plain_text(self, msg):
         self.plainTextEdit.appendPlainText(msg)
         self.update()
+
+    def update_event_log(self, msg):
+        self.update_plain_text(f"{datetime.now()}: {msg}")
 
 
 if __name__ == "__main__":

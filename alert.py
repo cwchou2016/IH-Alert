@@ -9,11 +9,13 @@ from playsound import playsound
 class Notify(threading.Thread):
     LOCK = threading.Lock()
 
-    def __init__(self, sound):
+    def __init__(self, sound, delay=0):
         super().__init__()
         self._sound = sound
+        self._delay = delay
 
     def run(self):
+        time.sleep(self._delay)
         self.LOCK.acquire()
         playsound(self._sound)
         print("提示音效播放中，請勿關閉視窗")
@@ -24,9 +26,13 @@ class Notify(threading.Thread):
 class FileEventHandler(FileSystemEventHandler):
     def __init__(self):
         self._alert_sound = None
+        self._alert_delay = 0
 
     def set_sound(self, sound_path):
         self._alert_sound = sound_path
+
+    def set_delay(self, delay):
+        self._alert_delay = delay
 
     def on_any_event(self, event):
         pass
@@ -50,7 +56,7 @@ class FileEventHandler(FileSystemEventHandler):
             print(f"{datetime.now()}: file deleted:{event.src_path}")
 
         if self._alert_sound is not None:
-            Notify(self._alert_sound).start()
+            Notify(self._alert_sound, self._alert_delay).start()
 
     def on_modified(self, event):
         if event.is_directory:
@@ -64,6 +70,7 @@ if __name__ == "__main__":
     observer = Observer()
     event_handler = FileEventHandler()
     event_handler.set_sound("10-seconds-loop-2-97528.mp3")
+    event_handler.set_delay(5)
     observer.schedule(event_handler, r"/home/lak/Documents/test", True)
     observer.start()
     try:

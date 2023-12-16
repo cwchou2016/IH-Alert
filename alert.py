@@ -4,6 +4,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from datetime import datetime
 from playsound import playsound
+from time import sleep
 
 
 class Notify(threading.Thread):
@@ -15,7 +16,7 @@ class Notify(threading.Thread):
         self._delay = delay
 
     def run(self):
-        time.sleep(self._delay)
+        sleep(self._delay)
         self.LOCK.acquire()
         playsound(self._sound)
         print("提示音效播放中，請勿關閉視窗")
@@ -86,7 +87,6 @@ class FileEventHandler(FileSystemEventHandler):
 
 
 if __name__ == "__main__":
-    import time
     observer = ObserveCenter()
     event_handler = FileEventHandler()
     event_handler.set_sound("10-seconds-loop-2-97528.mp3")
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     observer.start()
     try:
         while True:
-            time.sleep(1)
+            sleep(1)
             print(observer.get_run_time())
 
     except KeyboardInterrupt:

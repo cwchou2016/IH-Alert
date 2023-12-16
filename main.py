@@ -104,6 +104,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         super().update()
 
+    def close(self):
+        if self._watch.isRunning():
+            self._watch.stop()
+        super().close()
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

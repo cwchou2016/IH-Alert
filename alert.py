@@ -7,14 +7,18 @@ from playsound import playsound
 
 
 class Notify(threading.Thread):
+    LOCK = threading.Lock()
+
     def __init__(self, sound):
         super().__init__()
         self._sound = sound
 
     def run(self):
+        self.LOCK.acquire()
         playsound("10-seconds-loop-2-97528.mp3")
         print("提示音效播放中，請勿關閉視窗")
         print("若要取消，請按 CTRL+C")
+        self.LOCK.release()
 
 
 class FileEventHandler(FileSystemEventHandler):

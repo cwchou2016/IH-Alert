@@ -7,21 +7,51 @@ from playsound import playsound
 from time import sleep
 
 
-class Notify(threading.Thread):
+class Notification(threading.Thread):
     LOCK = threading.Lock()
 
-    def __init__(self, sound, delay=0):
+    def __init__(self, name, *, audio_file=None, delay=0):
         super().__init__()
-        self._sound = sound
         self._delay = delay
+        self._name = name
+        self._event = threading.Event()
+        self._second = 0
+        self._sound = audio_file
 
     def run(self):
-        sleep(self._delay)
-        self.LOCK.acquire()
+
+        while True:
+            if self._event.is_set():
+                self.on_stop()
+                break
+
+            self._event.wait(1)
+            if self._second == self._delay:
+                self.on_notify()
+                break
+
+            self._second += 1
+
+        self.on_complete()
+
+    def playsound(self):
         playsound(self._sound)
-        print("提示音效播放中，請勿關閉視窗")
-        print("若要取消，請按 CTRL+C")
-        self.LOCK.release()
+
+    def stop(self):
+        self._event.set()
+
+    def on_stop(self):
+        print("Interrupted")
+
+    def on_notify(self):
+        print("Notify")
+
+    def on_complete(self):
+        print("Completed")
+
+    @property
+    def name(self):
+        return self._name
 
 
 class ObserveCenter(Observer):
@@ -77,7 +107,7 @@ class FileEventHandler(FileSystemEventHandler):
             print(f"{datetime.now()}: file deleted:{event.src_path}")
 
         if self._alert_sound is not None:
-            Notify(self._alert_sound, self._alert_delay).start()
+            Notification("name", audio_file=self._alert_sound, delay=self._alert_delay).start()
 
     def on_modified(self, event):
         if event.is_directory:

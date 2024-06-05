@@ -1,16 +1,17 @@
 import sys
 from os.path import basename
 
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import QThread, pyqtSignal, QObject
+from PySide2 import QtWidgets
+from PySide2.QtCore import QThread, Signal, QObject, QCoreApplication, Qt
 from time import sleep
 from datetime import timedelta, datetime
 
 import alert
+from uic import loadUi
 
 
 class FileHandler(alert.FileEventHandler, QObject):
-    DELETED = pyqtSignal(object)
+    DELETED = Signal(object)
 
     def __init__(self):
         alert.FileEventHandler.__init__(self)
@@ -22,9 +23,9 @@ class FileHandler(alert.FileEventHandler, QObject):
 
 
 class WatchFolder(QThread):
-    WATCHING = pyqtSignal(str)
-    FINISHED = pyqtSignal(str)
-    NOTIFY = pyqtSignal(str)
+    WATCHING = Signal(str)
+    FINISHED = Signal(str)
+    NOTIFY = Signal(str)
 
     def __init__(self, folder_path, alert_sound):
         super().__init__()
@@ -59,7 +60,7 @@ class WatchFolder(QThread):
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi("mainWindow.ui", self)
+        loadUi("mainWindow.ui", self)
 
         self._watch = WatchFolder("/home/lak/Documents/test", "10-seconds-loop-2-97528.mp3")
         self._watch.WATCHING.connect(self.update_status_bar)
@@ -111,6 +112,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 if __name__ == "__main__":
+    QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()

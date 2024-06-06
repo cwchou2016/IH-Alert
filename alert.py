@@ -126,6 +126,7 @@ class IhFolderHandler(FileSystemEventHandler):
 
     @property
     def samples(self):
+        self.refresh_samples()
         return self._samples.keys()
 
     def add_sample(self, sample_id: str, notification: Notification):
@@ -134,6 +135,16 @@ class IhFolderHandler(FileSystemEventHandler):
     def remove_sample(self, sample_id: str):
         self._samples[sample_id].stop()
         del (self._samples[sample_id])
+
+    def refresh_samples(self):
+        to_remove = []
+
+        for sample in self._samples:
+            if not self._samples[sample].is_alive():
+                to_remove.append(sample)
+
+        for sample in to_remove:
+            self.remove_sample(sample)
 
 
 class XmlResult:

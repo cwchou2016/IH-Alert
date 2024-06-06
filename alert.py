@@ -5,6 +5,7 @@ from watchdog.events import FileSystemEventHandler
 from datetime import datetime
 from playsound import playsound
 from time import sleep
+import xmltodict
 
 
 class Notification(threading.Thread):
@@ -103,24 +104,52 @@ class FileEventHandler(FileSystemEventHandler):
             print(f"{datetime.now()}: file modified:{event.src_path}")
 
 
+class XmlResult:
+    """
+    Read results from xml file
+    """
+
+    def __init__(self, data=None):
+        self.data = data
+
+    @classmethod
+    def read_file(cls, f_name):
+        data = None
+        with open(f_name, "r") as f:
+            data = xmltodict.parse(f.read())
+
+        return XmlResult(data)
+
+    @property
+    def sample_id(self):
+        return self.data['RESULT']['RESULT']['SampleBarcode']
+
+    @property
+    def assays(self):
+        return [self.data['RESULT']['RESULT']['AssayCode']]
+
+
 class SampleTest:
     """
     Store information of samples,
     including sample numbers and assays used in the tests
     """
-    def __init__(self, sample_number:int, assays:list):
-        self._number = sample_number
+
+    def __init__(self, sample_number: int, assays: list[str]):
+        self._id = sample_number
         self._assays = assays
 
-    def read_xml(self):
-        pass
+    @classmethod
+    def read_xml(cls, file):
+        res = XmlResult.read_file(file)
+        return SampleTest(res.sample_id, res.assays)
 
     def read_upl(self):
         pass
 
     @property
-    def number(self):
-        return self._number
+    def sample_id(self):
+        return self._id
 
     @property
     def assays(self):
@@ -128,6 +157,8 @@ class SampleTest:
 
 
 if __name__ == "__main__":
+    import os
+
 
     class LisFolderHandler(FileEventHandler):
         def on_deleted(self, event):
@@ -136,8 +167,25 @@ if __name__ == "__main__":
             print("lis")
             Notification("", audio_file="10-seconds-loop-2-97528.mp3").start()
 
+
+    class IhFolderHandler(FileEventHandler):
+        def on_modified(self, event):
+            if event.is_directory:
+                return
+
+            dir_folder, f_name = os.path.split(event.src_path)
+
+            if os.path.basename(dir_folder) != "Results":
+                return
+
+            _, ext = os.path.splitext(f_name)
+            if ext == ".xml":
+                sample = SampleTest.read_xml(event.src_path)
+                print(sample.sample_id, sample.assays)
+
+
     observer = ObserveCenter()
-    event_handler = LisFolderHandler()
+    event_handler = IhFolderHandler()
     observer.schedule(event_handler, r"/home/lak/Documents/test", True)
     observer.start()
     try:
@@ -147,4 +195,3 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         observer.stop()
-

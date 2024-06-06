@@ -46,7 +46,9 @@ class Notification(threading.Thread):
         print("Interrupted")
 
     def on_notify(self):
-        print("Notify")
+        self.LOCK.acquire()
+        self.playsound()
+        self.LOCK.release()
 
     def on_complete(self):
         print("Completed")
@@ -54,6 +56,11 @@ class Notification(threading.Thread):
     @property
     def name(self):
         return self._name
+
+
+class Alert(Notification):
+    def on_notify(self):
+        self.playsound()
 
 
 class ObserveCenter(Observer):
@@ -83,7 +90,7 @@ class LisFolderHandler(FileSystemEventHandler):
     def on_deleted(self, event):
         if event.is_directory:
             return
-        Notification("", audio_file="10-seconds-loop-2-97528.mp3").start()
+        Notification("", audio_file="audio/complete.mp3").start()
 
 
 class IhFolderHandler(FileSystemEventHandler):
@@ -108,9 +115,8 @@ class IhFolderHandler(FileSystemEventHandler):
             if sample.sample_id in self.notifications:
                 print(f"{sample.sample_id} has been registered!")
                 return
-            notification = Notification(sample.sample_id, audio_file="10-seconds-loop-2-97528.mp3", delay=10)
+            notification = Alert(sample.sample_id, audio_file="audio/alert.mp3", delay=10)
             notification.start()
-
             self.add_notification(sample.sample_id, notification)
 
         elif ext.lower() == ".upl":

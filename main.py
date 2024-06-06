@@ -10,7 +10,7 @@ import alert
 from uic import loadUi
 
 
-class FileHandler(alert.FileEventHandler, QObject):
+class LisFolderHandler(alert.FileEventHandler, QObject):
     DELETED = Signal(object)
 
     def __init__(self):
@@ -18,7 +18,7 @@ class FileHandler(alert.FileEventHandler, QObject):
         QObject.__init__(self)
 
     def on_deleted(self, event):
-        super().on_deleted(event)
+        # super().on_deleted(event)
         self.DELETED.emit(event)
 
 
@@ -36,10 +36,9 @@ class WatchFolder(QThread):
     def run(self):
         self._running = True
         ob = alert.ObserveCenter()
-        handler = FileHandler()
-        handler.set_sound(self._alert)
-        handler.DELETED.connect(self.emit_notification)
-        ob.schedule(handler, self._folder, True)
+        lis_handler = LisFolderHandler()
+        lis_handler.DELETED.connect(self.on_lis_complete)
+        ob.schedule(lis_handler, self._folder, True)
         ob.start()
         while self._running:
             self.WATCHING.emit(f"Running time: {timedelta(seconds=ob.get_run_time())}")
@@ -53,7 +52,7 @@ class WatchFolder(QThread):
     def stop(self):
         self._running = False
 
-    def emit_notification(self, event):
+    def on_lis_complete(self, event):
         self.NOTIFY.emit(basename(event.src_path))
 
 

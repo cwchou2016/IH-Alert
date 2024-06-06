@@ -144,8 +144,19 @@ class SampleTest:
         res = XmlResult.read_file(file)
         return SampleTest(res.sample_id, res.assays)
 
-    def read_upl(self):
-        pass
+    @classmethod
+    def read_upl(cls, file):
+        sample_id, assays = None, []
+        with open(file, "r") as f:
+            for line in f.readlines():
+                l = line.split("|")
+                if l[0] == "P":
+                    sample_id = l[3]
+
+                if l[0] == "O":
+                    assays.append(l[4].strip("^"))
+
+        return SampleTest(sample_id, assays)
 
     @property
     def sample_id(self):
@@ -179,9 +190,13 @@ if __name__ == "__main__":
                 return
 
             _, ext = os.path.splitext(f_name)
-            if ext == ".xml":
+            if ext.lower() == ".xml":
                 sample = SampleTest.read_xml(event.src_path)
-                print(sample.sample_id, sample.assays)
+                print(datetime.now(), sample.sample_id, sample.assays, os.path.getsize(event.src_path))
+
+            if ext.lower() == ".upl":
+                sample = SampleTest.read_upl(event.src_path)
+                print(datetime.now(), sample.sample_id, sample.assays)
 
 
     observer = ObserveCenter()

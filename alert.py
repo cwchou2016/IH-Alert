@@ -75,16 +75,6 @@ class ObserveCenter(Observer):
 
 
 class FileEventHandler(FileSystemEventHandler):
-    def __init__(self):
-        self._alert_sound = None
-        self._alert_delay = 0
-
-    def set_sound(self, sound_path):
-        self._alert_sound = sound_path
-
-    def set_delay(self, delay):
-        self._alert_delay = delay
-
     def on_any_event(self, event):
         pass
 
@@ -106,9 +96,6 @@ class FileEventHandler(FileSystemEventHandler):
         else:
             print(f"{datetime.now()}: file deleted:{event.src_path}")
 
-        if self._alert_sound is not None:
-            Notification("name", audio_file=self._alert_sound, delay=self._alert_delay).start()
-
     def on_modified(self, event):
         if event.is_directory:
             print(f"{datetime.now()}: directory modified:{event.src_path}")
@@ -117,10 +104,16 @@ class FileEventHandler(FileSystemEventHandler):
 
 
 if __name__ == "__main__":
+
+    class LisFolderHandler(FileEventHandler):
+        def on_deleted(self, event):
+            if event.is_directory:
+                return
+            print("lis")
+            Notification("", audio_file="10-seconds-loop-2-97528.mp3").start()
+
     observer = ObserveCenter()
-    event_handler = FileEventHandler()
-    event_handler.set_sound("10-seconds-loop-2-97528.mp3")
-    event_handler.set_delay(5)
+    event_handler = LisFolderHandler()
     observer.schedule(event_handler, r"/home/lak/Documents/test", True)
     observer.start()
     try:

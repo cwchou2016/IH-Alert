@@ -86,6 +86,27 @@ class LisFolderHandler(FileSystemEventHandler):
         Notification("", audio_file="10-seconds-loop-2-97528.mp3").start()
 
 
+class IhFolderHandler(FileSystemEventHandler):
+    def __init__(self, audio_file=None):
+        self._samples = {}
+        self._audio = audio_file
+
+    def on_modified(self, event):
+        if event.is_directory:
+            return
+
+    @property
+    def samples(self):
+        return self._samples.keys()
+
+    def add_sample(self, sample_id: str, notification: Notification):
+        self._samples[sample_id] = notification
+
+    def remove_sample(self, sample_id: str):
+        self._samples[sample_id].stop()
+        del (self._samples[sample_id])
+
+
 class XmlResult:
     """
     Read results from xml file

@@ -1,3 +1,4 @@
+import shutil
 import threading
 import os
 
@@ -7,6 +8,8 @@ from datetime import datetime
 from playsound import playsound
 from time import sleep
 import xmltodict
+
+BACKUP_FOLDER = "backup/"
 
 
 class Notification(threading.Thread):
@@ -51,7 +54,7 @@ class Notification(threading.Thread):
         self.LOCK.release()
 
     def on_complete(self):
-        print("Completed")
+        print(f"{self._name} is Completed")
 
     @property
     def name(self):
@@ -90,7 +93,19 @@ class LisFolderHandler(FileSystemEventHandler):
     def on_deleted(self, event):
         if event.is_directory:
             return
-        Notification("", audio_file="audio/complete.mp3").start()
+
+        _, f_name = os.path.split(event.src_path)
+        _, ext = os.path.splitext(f_name)
+
+        if ext.lower() == ".upl":
+            sample = SampleTest.read_upl(os.path.join(BACKUP_FOLDER, f_name))
+            Notification(sample.sample_id, audio_file="audio/complete.mp3").start()
+
+    def on_modified(self, event):
+        if event.is_directory:
+            return
+        _, f_name = os.path.split(event.src_path)
+        shutil.copy(event.src_path, os.path.join(BACKUP_FOLDER, f_name))
 
 
 class IhFolderHandler(FileSystemEventHandler):

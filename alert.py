@@ -95,6 +95,35 @@ class IhFolderHandler(FileSystemEventHandler):
         if event.is_directory:
             return
 
+        dir_folder, f_name = os.path.split(event.src_path)
+
+        if os.path.basename(dir_folder) != "Results":
+            return
+
+        _, ext = os.path.splitext(f_name)
+        if ext.lower() == ".xml":
+            sample = SampleTest.read_xml(event.src_path)
+            print(datetime.now(), sample.sample_id, sample.assays, os.path.getsize(event.src_path))
+
+            if sample.sample_id in self.samples:
+                print(f"{sample.sample_id} has been registered!")
+                return
+            notification = Notification(sample.sample_id, audio_file="10-seconds-loop-2-97528.mp3", delay=10)
+            notification.start()
+
+            self.add_sample(sample.sample_id, notification)
+
+        elif ext.lower() == ".upl":
+            sample = SampleTest.read_upl(event.src_path)
+            print(datetime.now(), sample.sample_id, sample.assays)
+
+            if sample.sample_id not in self.samples:
+                print(f"{sample.sample_id} is not registered!")
+                return
+
+            if "PR15B" in sample.assays:
+                self.remove_sample(sample.sample_id)
+
     @property
     def samples(self):
         return self._samples.keys()
@@ -173,9 +202,9 @@ class SampleTest:
 if __name__ == "__main__":
 
     observer = ObserveCenter()
-    # ih_handler = IhFolderHandler()
+    ih_handler = IhFolderHandler()
     lis_handler = LisFolderHandler()
-    # observer.schedule(ih_handler, r"/home/lak/Documents/test/Results", False)
+    observer.schedule(ih_handler, r"/home/lak/Documents/test/Results", False)
     observer.schedule(lis_handler, r"/home/lak/Documents/test", False)
     observer.start()
     try:

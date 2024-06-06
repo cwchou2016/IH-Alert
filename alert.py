@@ -88,7 +88,7 @@ class LisFolderHandler(FileSystemEventHandler):
 
 class IhFolderHandler(FileSystemEventHandler):
     def __init__(self, audio_file=None):
-        self._samples = {}
+        self._notifications = {}
         self._audio = audio_file
 
     def on_modified(self, event):
@@ -105,46 +105,46 @@ class IhFolderHandler(FileSystemEventHandler):
             sample = SampleTest.read_xml(event.src_path)
             print(datetime.now(), sample.sample_id, sample.assays, os.path.getsize(event.src_path))
 
-            if sample.sample_id in self.samples:
+            if sample.sample_id in self.notifications:
                 print(f"{sample.sample_id} has been registered!")
                 return
             notification = Notification(sample.sample_id, audio_file="10-seconds-loop-2-97528.mp3", delay=10)
             notification.start()
 
-            self.add_sample(sample.sample_id, notification)
+            self.add_notification(sample.sample_id, notification)
 
         elif ext.lower() == ".upl":
             sample = SampleTest.read_upl(event.src_path)
             print(datetime.now(), sample.sample_id, sample.assays)
 
-            if sample.sample_id not in self.samples:
+            if sample.sample_id not in self.notifications:
                 print(f"{sample.sample_id} is not registered!")
                 return
 
             if "PR15B" in sample.assays:
-                self.remove_sample(sample.sample_id)
+                self.remove_notification(sample.sample_id)
 
     @property
-    def samples(self):
-        self.refresh_samples()
-        return self._samples.keys()
+    def notifications(self):
+        self.refresh_notifications()
+        return self._notifications.keys()
 
-    def add_sample(self, sample_id: str, notification: Notification):
-        self._samples[sample_id] = notification
+    def add_notification(self, sample_id: str, notification: Notification):
+        self._notifications[sample_id] = notification
 
-    def remove_sample(self, sample_id: str):
-        self._samples[sample_id].stop()
-        del (self._samples[sample_id])
+    def remove_notification(self, sample_id: str):
+        self._notifications[sample_id].stop()
+        del (self._notifications[sample_id])
 
-    def refresh_samples(self):
+    def refresh_notifications(self):
         to_remove = []
 
-        for sample in self._samples:
-            if not self._samples[sample].is_alive():
+        for sample in self._notifications:
+            if not self._notifications[sample].is_alive():
                 to_remove.append(sample)
 
         for sample in to_remove:
-            self.remove_sample(sample)
+            self.remove_notification(sample)
 
 
 class XmlResult:

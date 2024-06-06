@@ -103,6 +103,30 @@ class FileEventHandler(FileSystemEventHandler):
             print(f"{datetime.now()}: file modified:{event.src_path}")
 
 
+class SampleTest:
+    """
+    Store information of samples,
+    including sample numbers and assays used in the tests
+    """
+    def __init__(self, sample_number:int, assays:list):
+        self._number = sample_number
+        self._assays = assays
+
+    def read_xml(self):
+        pass
+
+    def read_upl(self):
+        pass
+
+    @property
+    def number(self):
+        return self._number
+
+    @property
+    def assays(self):
+        return self._assays
+
+
 if __name__ == "__main__":
 
     class LisFolderHandler(FileEventHandler):
@@ -119,7 +143,7 @@ if __name__ == "__main__":
     try:
         while True:
             sleep(1)
-            print(observer.get_run_time())
+            # print(observer.get_run_time())
 
     except KeyboardInterrupt:
         observer.stop()

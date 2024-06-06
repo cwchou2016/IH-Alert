@@ -1,4 +1,5 @@
 import threading
+import os
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -75,33 +76,14 @@ class ObserveCenter(Observer):
         return (datetime.now() - self._start_time).seconds
 
 
-class FileEventHandler(FileSystemEventHandler):
-    def on_any_event(self, event):
-        pass
-
-    def on_moved(self, event):
-        if event.is_directory:
-            print(f"{datetime.now()}: directory moved from {event.src_path} to {event.dest_path}")
-        else:
-            print(f"{datetime.now()}: file moved from {event.src_path} to {event.dest_path}")
-
-    def on_created(self, event):
-        if event.is_directory:
-            print(f"{datetime.now()}: directory created:{event.src_path}")
-        else:
-            print(f"{datetime.now()}: file created:{event.src_path}")
+class LisFolderHandler(FileSystemEventHandler):
+    def __init__(self, audio_file=None):
+        self._audio = audio_file
 
     def on_deleted(self, event):
         if event.is_directory:
-            print(f"{datetime.now()}: directory deleted:{event.src_path}")
-        else:
-            print(f"{datetime.now()}: file deleted:{event.src_path}")
-
-    def on_modified(self, event):
-        if event.is_directory:
-            print(f"{datetime.now()}: directory modified:{event.src_path}")
-        else:
-            print(f"{datetime.now()}: file modified:{event.src_path}")
+            return
+        Notification("", audio_file="10-seconds-loop-2-97528.mp3").start()
 
 
 class XmlResult:
@@ -168,40 +150,12 @@ class SampleTest:
 
 
 if __name__ == "__main__":
-    import os
-
-
-    class LisFolderHandler(FileEventHandler):
-        def on_deleted(self, event):
-            if event.is_directory:
-                return
-            print("lis")
-            Notification("", audio_file="10-seconds-loop-2-97528.mp3").start()
-
-
-    class IhFolderHandler(FileEventHandler):
-        def on_modified(self, event):
-            if event.is_directory:
-                return
-
-            dir_folder, f_name = os.path.split(event.src_path)
-
-            if os.path.basename(dir_folder) != "Results":
-                return
-
-            _, ext = os.path.splitext(f_name)
-            if ext.lower() == ".xml":
-                sample = SampleTest.read_xml(event.src_path)
-                print(datetime.now(), sample.sample_id, sample.assays, os.path.getsize(event.src_path))
-
-            if ext.lower() == ".upl":
-                sample = SampleTest.read_upl(event.src_path)
-                print(datetime.now(), sample.sample_id, sample.assays)
-
 
     observer = ObserveCenter()
-    event_handler = IhFolderHandler()
-    observer.schedule(event_handler, r"/home/lak/Documents/test", True)
+    # ih_handler = IhFolderHandler()
+    lis_handler = LisFolderHandler()
+    # observer.schedule(ih_handler, r"/home/lak/Documents/test/Results", False)
+    observer.schedule(lis_handler, r"/home/lak/Documents/test", False)
     observer.start()
     try:
         while True:

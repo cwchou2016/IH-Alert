@@ -211,7 +211,6 @@ class XmlResult:
 
     @classmethod
     def read_file(cls, f_name):
-        data = None
         with open(f_name, "r") as f:
             data = xmltodict.parse(f.read())
 
@@ -232,7 +231,7 @@ class SampleTest:
     including sample numbers and assays used in the tests
     """
 
-    def __init__(self, sample_number: int, assays: list[str]):
+    def __init__(self, sample_number: str, assays: list[str]):
         self._id = sample_number
         self._assays = assays
 

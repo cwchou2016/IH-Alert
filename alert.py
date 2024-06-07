@@ -1,4 +1,5 @@
 import shutil
+import subprocess
 import threading
 import os
 
@@ -11,6 +12,16 @@ from time import sleep
 import xmltodict
 
 BACKUP_FOLDER = "backup/"
+
+
+def send_result_to_lis():
+    try:
+        _org_dir = os.getcwd()
+        os.chdir(r"c:\automation")
+        subprocess.run([r"AutomationNet.exe"])
+        os.chdir(_org_dir)
+    except Exception as e:
+        print(e)
 
 
 class Notification(threading.Thread):
@@ -61,11 +72,13 @@ class Notification(threading.Thread):
         print("Interrupted")
 
     def on_notify(self):
-        if not self.LOCK.locked():
-            self.LOCK.acquire()
+        is_locked = self.LOCK.locked()
+
+        self.LOCK.acquire()
+        send_result_to_lis()
+
+        if not is_locked:
             self.playsound()
-        else:
-            self.LOCK.acquire()
 
         self.say_last_3_char()
         self.LOCK.release()

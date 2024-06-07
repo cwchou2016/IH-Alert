@@ -6,6 +6,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from datetime import datetime
 from playsound import playsound
+from gtts import gTTS
 from time import sleep
 import xmltodict
 
@@ -42,6 +43,17 @@ class Notification(threading.Thread):
     def playsound(self):
         playsound(self._sound)
 
+    def say_last_3_char(self):
+        last_3 = self._name[-3:]
+        audio_file = f"audio/{last_3}.mp3"
+
+        if not os.path.isfile(audio_file):
+            to_speak = [c for c in last_3]
+            tts = gTTS(f"{to_speak}。已完成", lang="zh-tw")
+            tts.save(audio_file)
+
+        playsound(audio_file)
+
     def stop(self):
         self._event.set()
 
@@ -49,8 +61,13 @@ class Notification(threading.Thread):
         print("Interrupted")
 
     def on_notify(self):
-        self.LOCK.acquire()
-        self.playsound()
+        if not self.LOCK.locked():
+            self.LOCK.acquire()
+            self.playsound()
+        else:
+            self.LOCK.acquire()
+
+        self.say_last_3_char()
         self.LOCK.release()
 
     def on_complete(self):

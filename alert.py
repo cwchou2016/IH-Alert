@@ -90,6 +90,9 @@ class LisFolderHandler(FileSystemEventHandler):
     def __init__(self, audio_file=None):
         self._audio = audio_file
 
+        if not os.path.isdir(BACKUP_FOLDER):
+            os.mkdir(BACKUP_FOLDER)
+
     def on_deleted(self, event):
         if event.is_directory:
             return

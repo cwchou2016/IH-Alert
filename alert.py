@@ -60,7 +60,7 @@ class Notification(threading.Thread):
 
         if not os.path.isfile(audio_file):
             to_speak = [c for c in last_3]
-            tts = gTTS(f"{to_speak}。已完成", lang="zh-tw")
+            tts = gTTS(f"{to_speak}。已完成", lang="zh-tw", slow=True)
             tts.save(audio_file)
 
         playsound(audio_file)

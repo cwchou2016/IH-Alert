@@ -7,6 +7,8 @@ from PySide2.QtCore import QThread, Signal, QObject, QCoreApplication, Qt
 from time import sleep
 from datetime import timedelta, datetime
 
+from PySide2.QtWidgets import QFileDialog
+
 import alert
 from uic import loadUi
 
@@ -171,10 +173,41 @@ class SettingWindow(QtWidgets.QWidget):
         super().__init__(parent)
         loadUi("settings.ui", self)
 
+        self.btnIhFolderSelector.clicked.connect(self.set_ih_folder)
+        self.btnLisFolderSelector.clicked.connect(self.set_lis_folder)
+        self.btnCompleteSoundSelector.clicked.connect(self.set_complete_sound)
+        self.btnAlertSoundSelector.clicked.connect(self.set_alert_sound)
+
+    def load(self):
+        pass
+
+    def save(self):
+        pass
+
+    def set_ih_folder(self):
+        folder = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+        self.lineIhFolder.setText(folder)
+        self.update()
+
+    def set_lis_folder(self):
+        folder = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+        self.lineLisFolder.setText(folder)
+        self.update()
+
+    def set_complete_sound(self):
+        file = QFileDialog.getOpenFileName(self, "Select File", "*.mp3")[0]
+        self.lineCompleteSound.setText(file)
+        self.update()
+
+    def set_alert_sound(self):
+        file = QFileDialog.getOpenFileName(self, "Select File")[0]
+        self.lineAlertSound.setText(file)
+        self.update()
+
 
 if __name__ == "__main__":
     QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication(sys.argv)
-    window = MainWindow()
+    window = SettingWindow()
     window.show()
     sys.exit(app.exec_())

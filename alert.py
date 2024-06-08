@@ -179,9 +179,11 @@ class IhFolderHandler(FileSystemEventHandler):
             if sample.sample_id in self.notifications:
                 print(f"{sample.sample_id} has been registered!")
                 return
-            notification = Alert(sample.sample_id, audio_file=self._audio, delay=self._delay)
-            notification.start()
-            self.add_notification(sample.sample_id, notification)
+
+            if "PR15B" in sample.assays:
+                notification = Alert(sample.sample_id, audio_file=self._audio, delay=self._delay)
+                notification.start()
+                self.add_notification(sample.sample_id, notification)
 
         elif ext.lower() == ".upl":
             sample = SampleTest.read_upl(event.src_path)

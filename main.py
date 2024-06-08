@@ -120,10 +120,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.pushButton_start.clicked.connect(self.btn_start_clicked)
         self.pushButton_stop.clicked.connect(self.btn_stop_clicked)
+        self.actionSettings.triggered.connect(self.show_setting)
 
         self.btn_start_clicked()
 
         self.update()
+
+    def show_setting(self):
+        widget = SettingWindow()
+        widget.show()
 
     def btn_start_clicked(self):
         self.update_status_bar("Starting")
@@ -159,6 +164,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if self._watch.isRunning():
             self._watch.stop()
         super().close()
+
+
+class SettingWindow(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        loadUi("settings.ui", self)
 
 
 if __name__ == "__main__":

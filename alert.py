@@ -11,8 +11,6 @@ from gtts import gTTS
 from time import sleep
 import xmltodict
 
-BACKUP_FOLDER = "backup/"
-
 
 def send_result_to_lis():
     try:
@@ -27,15 +25,14 @@ def send_result_to_lis():
 class Notification(threading.Thread):
     LOCK = threading.Lock()
 
-    def __init__(self, name, *, audio_file=None, delay=0):
+    def __init__(self, name, *, audio_file=None, delay=0, out_folder="audio/out/"):
         super().__init__()
         self._delay = delay
         self._name = name
         self._event = threading.Event()
         self._second = 0
         self._sound = audio_file
-
-        self._out = "audio/out/"
+        self._out = out_folder
 
         if not os.path.isdir(self._out):
             os.mkdir(self._out)
@@ -122,11 +119,13 @@ class ObserveCenter(Observer):
 
 
 class LisFolderHandler(FileSystemEventHandler):
-    def __init__(self, audio_file=None):
+    def __init__(self, *, audio_file=None, backup_folder="backup/", delay=0):
         self._audio = audio_file
+        self._backup_folder = backup_folder
+        self._delay = delay
 
-        if not os.path.isdir(BACKUP_FOLDER):
-            os.mkdir(BACKUP_FOLDER)
+        if not os.path.isdir(self._backup_folder):
+            os.mkdir(self._backup_folder)
 
     def on_deleted(self, event):
         if event.is_directory:
@@ -140,11 +139,11 @@ class LisFolderHandler(FileSystemEventHandler):
         if ext.lower() == ".upl":
             sample_id = " "
             try:
-                sample_id = SampleTest.read_upl(os.path.join(BACKUP_FOLDER, f_name)).sample_id
+                sample_id = SampleTest.read_upl(os.path.join(self._backup_folder, f_name)).sample_id
             except Exception as e:
                 print(e)
 
-            Notification(sample_id, audio_file="audio/complete.mp3").start()
+            Notification(sample_id, audio_file=self._audio, delay=self._delay).start()
 
     def on_modified(self, event):
         if event.is_directory:
@@ -152,13 +151,14 @@ class LisFolderHandler(FileSystemEventHandler):
 
         print(f"{datetime.now()}: Modified {event.src_path}")
         _, f_name = os.path.split(event.src_path)
-        shutil.copy(event.src_path, os.path.join(BACKUP_FOLDER, f_name))
+        shutil.copy(event.src_path, os.path.join(self._backup_folder, f_name))
 
 
 class IhFolderHandler(FileSystemEventHandler):
-    def __init__(self, audio_file=None):
+    def __init__(self, *, audio_file=None, delay=10):
         self._notifications = {}
         self._audio = audio_file
+        self._delay = delay
 
     def on_modified(self, event):
         if event.is_directory:
@@ -179,7 +179,7 @@ class IhFolderHandler(FileSystemEventHandler):
             if sample.sample_id in self.notifications:
                 print(f"{sample.sample_id} has been registered!")
                 return
-            notification = Alert(sample.sample_id, audio_file="audio/alert.mp3", delay=10)
+            notification = Alert(sample.sample_id, audio_file=self._audio, delay=self._delay)
             notification.start()
             self.add_notification(sample.sample_id, notification)
 
@@ -280,12 +280,15 @@ class SampleTest:
 
 
 if __name__ == "__main__":
+    from settings import Settings
+
+    settings = Settings("config.ini")
 
     observer = ObserveCenter()
-    ih_handler = IhFolderHandler()
-    lis_handler = LisFolderHandler()
-    observer.schedule(ih_handler, r"/home/lak/Documents/test/Results", False)
-    observer.schedule(lis_handler, r"/home/lak/Documents/test", False)
+    ih_handler = IhFolderHandler(audio_file=settings.get("alert_sound"), delay=int(settings.get("alert_wait")))
+    lis_handler = LisFolderHandler(audio_file=settings.get("complete_sound"))
+    observer.schedule(ih_handler, settings.get("ih_folder"), False)
+    observer.schedule(lis_handler, settings.get("lis_folder"), False)
     observer.start()
     try:
         while True:

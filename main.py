@@ -1,6 +1,6 @@
 import os
 import sys
-from os.path import basename
+
 
 from PySide2 import QtWidgets
 from PySide2.QtCore import QThread, Signal, QObject, QCoreApplication, Qt
@@ -12,24 +12,55 @@ from uic import loadUi
 
 
 class LisFolderHandler(alert.LisFolderHandler, QObject):
-    DELETED = Signal(object)
+    DELETED = Signal(alert.SampleTest)
 
     def __init__(self):
         alert.LisFolderHandler.__init__(self)
         QObject.__init__(self)
 
     def on_deleted(self, event):
-        self.DELETED.emit(event)
+        _, f_name = os.path.split(event.src_path)
+        _, ext = os.path.splitext(f_name)
+
+        if ext.lower() == ".upl":
+            sample = alert.SampleTest("unknown", [])
+            try:
+                sample = alert.SampleTest.read_upl(os.path.join(alert.BACKUP_FOLDER, f_name))
+            except Exception as e:
+                print(e)
+
+        self.DELETED.emit(sample)
         super().on_deleted(event)
 
 
 class IhFolderHandler(alert.IhFolderHandler, QObject):
+    RECEIVED = Signal(alert.SampleTest)
+    CONFIRMED = Signal(alert.SampleTest)
+
     def __init__(self):
         alert.IhFolderHandler.__init__(self)
         QObject.__init__(self)
 
     def on_modified(self, event):
         super().on_modified(event)
+
+        dir_folder, f_name = os.path.split(event.src_path)
+
+        if os.path.basename(dir_folder) != "Results":
+            return
+
+        _, ext = os.path.splitext(f_name)
+        if ext.lower() == ".xml":
+            sample = alert.SampleTest.read_xml(event.src_path)
+
+            # result is received
+            self.RECEIVED.emit(sample)
+
+        elif ext.lower() == ".upl":
+            sample = alert.SampleTest.read_upl(event.src_path)
+
+            # result is confirmed
+            self.CONFIRMED.emit(sample)
 
 
 class WatchFolder(QThread):
@@ -49,6 +80,8 @@ class WatchFolder(QThread):
         lis_handler = LisFolderHandler()
         lis_handler.DELETED.connect(self.on_lis_complete)
         ih_handler = IhFolderHandler()
+        ih_handler.RECEIVED.connect(self.on_received)
+        ih_handler.CONFIRMED.connect(self.on_confirmed)
         ob.schedule(lis_handler, self._lis_folder, False)
         ob.schedule(ih_handler, self._ih_folder, True)
         ob.start()
@@ -64,8 +97,14 @@ class WatchFolder(QThread):
     def stop(self):
         self._running = False
 
-    def on_lis_complete(self, event):
-        self.NOTIFY.emit(basename(event.src_path))
+    def on_lis_complete(self, sample):
+        self.NOTIFY.emit(f"{sample.sample_id} is completed")
+
+    def on_received(self, sample):
+        self.NOTIFY.emit(f"{sample.sample_id} is received")
+
+    def on_confirmed(self, sample):
+        self.NOTIFY.emit(f"{sample.sample_id} is confirmed")
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -104,7 +143,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update()
 
     def update_event_log(self, msg):
-        self.update_plain_text(f"{datetime.now()}: {msg}")
+        self.update_plain_text(f"{datetime.now()}:  {msg}")
 
     def update(self):
         if self._watch.isRunning():

@@ -10,16 +10,16 @@ import alert
 from uic import loadUi
 
 
-class LisFolderHandler(alert.FileEventHandler, QObject):
+class LisFolderHandler(alert.LisFolderHandler, QObject):
     DELETED = Signal(object)
 
     def __init__(self):
-        alert.FileEventHandler.__init__(self)
+        alert.LisFolderHandler.__init__(self)
         QObject.__init__(self)
 
     def on_deleted(self, event):
-        # super().on_deleted(event)
         self.DELETED.emit(event)
+        super().on_deleted(event)
 
 
 class WatchFolder(QThread):

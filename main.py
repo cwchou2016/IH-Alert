@@ -173,6 +173,11 @@ class SettingWindow(QtWidgets.QWidget):
         super().__init__(parent)
         loadUi("settings.ui", self)
 
+        self.lineIhFolder.setReadOnly(True)
+        self.lineLisFolder.setReadOnly(True)
+        self.lineCompleteSound.setReadOnly(True)
+        self.lineAlertSound.setReadOnly(True)
+
         self.btnIhFolderSelector.clicked.connect(self.set_ih_folder)
         self.btnLisFolderSelector.clicked.connect(self.set_lis_folder)
         self.btnCompleteSoundSelector.clicked.connect(self.set_complete_sound)

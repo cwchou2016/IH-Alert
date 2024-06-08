@@ -1,3 +1,4 @@
+import os
 import sys
 from os.path import basename
 
@@ -22,23 +23,34 @@ class LisFolderHandler(alert.LisFolderHandler, QObject):
         super().on_deleted(event)
 
 
+class IhFolderHandler(alert.IhFolderHandler, QObject):
+    def __init__(self):
+        alert.IhFolderHandler.__init__(self)
+        QObject.__init__(self)
+
+    def on_modified(self, event):
+        super().on_modified(event)
+
+
 class WatchFolder(QThread):
     WATCHING = Signal(str)
     FINISHED = Signal(str)
     NOTIFY = Signal(str)
 
-    def __init__(self, folder_path, alert_sound):
+    def __init__(self, *, lis_folder, ih_folder):
         super().__init__()
         self._running = False
-        self._folder = folder_path
-        self._alert = alert_sound
+        self._lis_folder = lis_folder
+        self._ih_folder = ih_folder
 
     def run(self):
         self._running = True
         ob = alert.ObserveCenter()
         lis_handler = LisFolderHandler()
         lis_handler.DELETED.connect(self.on_lis_complete)
-        ob.schedule(lis_handler, self._folder, True)
+        ih_handler = IhFolderHandler()
+        ob.schedule(lis_handler, self._lis_folder, False)
+        ob.schedule(ih_handler, self._ih_folder, True)
         ob.start()
         while self._running:
             self.WATCHING.emit(f"Running time: {timedelta(seconds=ob.get_run_time())}")
@@ -61,7 +73,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         loadUi("mainWindow.ui", self)
 
-        self._watch = WatchFolder("/home/lak/Documents/test", "10-seconds-loop-2-97528.mp3")
+        self._watch = WatchFolder(lis_folder="/home/lak/Documents/test", ih_folder=r"/home/lak/Documents/test/Results")
         self._watch.WATCHING.connect(self.update_status_bar)
         self._watch.FINISHED.connect(self.update_event_log)
         self._watch.FINISHED.connect(self.update_status_bar)

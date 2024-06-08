@@ -35,6 +35,11 @@ class Notification(threading.Thread):
         self._second = 0
         self._sound = audio_file
 
+        self._out = "audio/out/"
+
+        if not os.path.isdir(self._out):
+            os.mkdir(self._out)
+
     def run(self):
 
         while True:
@@ -56,11 +61,11 @@ class Notification(threading.Thread):
 
     def say_last_3_char(self):
         last_3 = self._name[-3:]
-        audio_file = f"audio/{last_3}.mp3"
+        audio_file = f"{self._out}{last_3}.mp3"
 
         if not os.path.isfile(audio_file):
-            to_speak = [c for c in last_3]
-            tts = gTTS(f"{to_speak}。已完成", lang="zh-tw", slow=True)
+            to_speak = " ".join([c for c in last_3])
+            tts = gTTS(f" {to_speak} 。已完成", lang="zh-tw", slow=True)
             tts.save(audio_file)
 
         playsound(audio_file)
@@ -127,16 +132,25 @@ class LisFolderHandler(FileSystemEventHandler):
         if event.is_directory:
             return
 
+        print(f"{datetime.now()}: Deleted {event.src_path}")
+
         _, f_name = os.path.split(event.src_path)
         _, ext = os.path.splitext(f_name)
 
         if ext.lower() == ".upl":
-            sample = SampleTest.read_upl(os.path.join(BACKUP_FOLDER, f_name))
-            Notification(sample.sample_id, audio_file="audio/complete.mp3").start()
+            sample_id = " "
+            try:
+                sample_id = SampleTest.read_upl(os.path.join(BACKUP_FOLDER, f_name)).sample_id
+            except Exception as e:
+                print(e)
+
+            Notification(sample_id, audio_file="audio/complete.mp3").start()
 
     def on_modified(self, event):
         if event.is_directory:
             return
+
+        print(f"{datetime.now()}: Modified {event.src_path}")
         _, f_name = os.path.split(event.src_path)
         shutil.copy(event.src_path, os.path.join(BACKUP_FOLDER, f_name))
 
@@ -149,6 +163,8 @@ class IhFolderHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if event.is_directory:
             return
+
+        print(f"{datetime.now()}: Modified {event.src_path}")
 
         dir_folder, f_name = os.path.split(event.src_path)
 

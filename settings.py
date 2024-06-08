@@ -38,10 +38,20 @@ class Settings:
         with open(self._f_name, "w") as f:
             self._config.write(f)
 
+    def get(self, opt):
+        return self._config.get("setting", opt)
+
+    def get_values(self):
+        value_dict = {}
+        for opt in self._options:
+            value_dict[opt] = self._config.get("setting", opt)
+
+        return value_dict
+
 
 if __name__ == "__main__":
     s = Settings("config.ini")
-    # s.load()
+    s.load()
     # s.update({"lis_folder": "sdf"})
     s.save()
-    print((s._config))
+    print(s.get("sdf"))

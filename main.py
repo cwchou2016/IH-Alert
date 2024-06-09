@@ -10,6 +10,7 @@ from datetime import timedelta, datetime
 from PySide2.QtWidgets import QFileDialog
 
 import alert
+from settings import Settings
 from uic import loadUi
 
 
@@ -173,6 +174,14 @@ class SettingWindow(QtWidgets.QWidget):
         super().__init__(parent)
         loadUi("settings.ui", self)
 
+        self._settings = {
+            "ih_folder": self.lineIhFolder,
+            "lis_folder": self.lineLisFolder,
+            "complete_sound": self.lineCompleteSound,
+            "alert_sound": self.lineAlertSound,
+            "alert_wait": self.spinWait
+        }
+
         self.lineIhFolder.setReadOnly(True)
         self.lineLisFolder.setReadOnly(True)
         self.lineCompleteSound.setReadOnly(True)
@@ -183,8 +192,18 @@ class SettingWindow(QtWidgets.QWidget):
         self.btnCompleteSoundSelector.clicked.connect(self.set_complete_sound)
         self.btnAlertSoundSelector.clicked.connect(self.set_alert_sound)
 
+        self.load()
+
     def load(self):
-        pass
+        settings = Settings("config.ini")
+
+        for opt in settings.get_values().keys():
+            item = self._settings[opt]
+            if type(item) is QtWidgets.QLineEdit:
+                item.setText(settings.get(opt))
+
+            if type(item) is QtWidgets.QSpinBox:
+                item.setValue(int(settings.get(opt)))
 
     def save(self):
         pass

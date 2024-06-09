@@ -28,7 +28,7 @@ class LisFolderHandler(alert.LisFolderHandler, QObject):
         if ext.lower() == ".upl":
             sample = alert.SampleTest("unknown", [])
             try:
-                sample = alert.SampleTest.read_upl(os.path.join(alert.BACKUP_FOLDER, f_name))
+                sample = alert.SampleTest.read_upl(os.path.join(self._backup_folder, f_name))
             except Exception as e:
                 print(e)
 
@@ -115,11 +115,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         loadUi("mainWindow.ui", self)
 
-        self._watch = WatchFolder(lis_folder="/home/lak/Documents/test", ih_folder=r"/home/lak/Documents/test/Results")
-        self._watch.WATCHING.connect(self.update_status_bar)
-        self._watch.FINISHED.connect(self.update_event_log)
-        self._watch.FINISHED.connect(self.update_status_bar)
-        self._watch.NOTIFY.connect(self.update_event_log)
+        self._watch = None
 
         self.pushButton_start.clicked.connect(self.btn_start_clicked)
         self.pushButton_stop.clicked.connect(self.btn_stop_clicked)
@@ -135,10 +131,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def btn_start_clicked(self):
         self.update_status_bar("Starting")
+        if self._watch is not None:
+            self._watch = None
+
+        self._watch = WatchFolder(lis_folder="/home/lak/Documents/test", ih_folder=r"/home/lak/Documents/test/Results")
+        self._watch.WATCHING.connect(self.update_status_bar)
+        self._watch.FINISHED.connect(self.update_event_log)
+        self._watch.FINISHED.connect(self.update_status_bar)
+        self._watch.NOTIFY.connect(self.update_event_log)
         self._watch.start()
         self.update_event_log("Notification is running")
 
     def btn_stop_clicked(self):
+        if self._watch is None:
+            return
+
         self._watch.stop()
         self.update_status_bar("Stopping")
 
@@ -154,7 +161,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_plain_text(f"{datetime.now()}:  {msg}")
 
     def update(self):
-        if self._watch.isRunning():
+        if self._watch is None:
+            pass
+        elif self._watch.isRunning():
             self.pushButton_start.hide()
             self.pushButton_stop.show()
         else:
@@ -248,6 +257,6 @@ class SettingWindow(QtWidgets.QWidget):
 if __name__ == "__main__":
     QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication(sys.argv)
-    window = SettingWindow()
+    window = MainWindow()
     window.show()
     sys.exit(app.exec_())

@@ -17,8 +17,8 @@ from uic import loadUi
 class LisFolderHandler(alert.LisFolderHandler, QObject):
     DELETED = Signal(alert.SampleTest)
 
-    def __init__(self):
-        alert.LisFolderHandler.__init__(self)
+    def __init__(self, audio_file, delay):
+        alert.LisFolderHandler.__init__(self, audio_file=audio_file, delay=delay)
         QObject.__init__(self)
 
     def on_deleted(self, event):
@@ -40,8 +40,8 @@ class IhFolderHandler(alert.IhFolderHandler, QObject):
     RECEIVED = Signal(alert.SampleTest)
     CONFIRMED = Signal(alert.SampleTest)
 
-    def __init__(self):
-        alert.IhFolderHandler.__init__(self)
+    def __init__(self, audio_file, delay):
+        alert.IhFolderHandler.__init__(self, audio_file=audio_file, delay=delay)
         QObject.__init__(self)
 
     def on_modified(self, event):
@@ -71,22 +71,21 @@ class WatchFolder(QThread):
     FINISHED = Signal(str)
     NOTIFY = Signal(str)
 
-    def __init__(self, *, lis_folder, ih_folder):
+    def __init__(self, config):
         super().__init__()
         self._running = False
-        self._lis_folder = lis_folder
-        self._ih_folder = ih_folder
+        self._config = config
 
     def run(self):
         self._running = True
         ob = alert.ObserveCenter()
-        lis_handler = LisFolderHandler()
+        lis_handler = LisFolderHandler(audio_file=self._config.get("complete_sound"), delay=0)
         lis_handler.DELETED.connect(self.on_lis_complete)
-        ih_handler = IhFolderHandler()
+        ih_handler = IhFolderHandler(audio_file=self._config.get("alert_sound"), delay=60)
         ih_handler.RECEIVED.connect(self.on_received)
         ih_handler.CONFIRMED.connect(self.on_confirmed)
-        ob.schedule(lis_handler, self._lis_folder, False)
-        ob.schedule(ih_handler, self._ih_folder, True)
+        ob.schedule(lis_handler, self._config.get("lis_folder"), False)
+        ob.schedule(ih_handler, self._config.get("ih_folder"), True)
         ob.start()
         while self._running:
             self.WATCHING.emit(f"Running time: {timedelta(seconds=ob.get_run_time())}")
@@ -133,8 +132,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_status_bar("Starting")
         if self._watch is not None:
             self._watch = None
-
-        self._watch = WatchFolder(lis_folder="/home/lak/Documents/test", ih_folder=r"/home/lak/Documents/test/Results")
+        config = Settings("config.ini")
+        self._watch = WatchFolder(config)
         self._watch.WATCHING.connect(self.update_status_bar)
         self._watch.FINISHED.connect(self.update_event_log)
         self._watch.FINISHED.connect(self.update_status_bar)

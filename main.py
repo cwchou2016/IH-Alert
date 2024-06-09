@@ -247,13 +247,13 @@ class SettingWindow(QtWidgets.QWidget):
         self.update()
 
     def set_complete_sound(self):
-        file = QFileDialog.getOpenFileName(self, "Select File", "*.mp3")[0]
+        file = QFileDialog.getOpenFileName(self, "Select Sound File", "./", "mp3 file (*.mp3)")[0]
         if file != "":
             self.lineCompleteSound.setText(file)
         self.update()
 
     def set_alert_sound(self):
-        file = QFileDialog.getOpenFileName(self, "Select File")[0]
+        file = QFileDialog.getOpenFileName(self, "Select Sound File", "./", "mp3 file (*.mp3)")[0]
         if file != "":
             self.lineAlertSound.setText(file)
         self.update()

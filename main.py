@@ -124,13 +124,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update()
 
     def show_setting(self):
+        self.btn_stop_clicked()
         widget = SettingWindow()
+        widget.CLOSE.connect(self.btn_start_clicked)
         widget.show()
 
     def btn_start_clicked(self):
         self.update_status_bar("Starting")
         if self._watch is not None:
-            self._watch = None
+            self.btn_stop_clicked()
+
+
         config = Settings("config.ini")
         self._watch = WatchFolder(config)
         self._watch.WATCHING.connect(self.update_status_bar)
@@ -177,6 +181,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 class SettingWindow(QtWidgets.QWidget):
+    CLOSE = Signal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         loadUi("settings.ui", self)
@@ -203,6 +209,7 @@ class SettingWindow(QtWidgets.QWidget):
         self.pushTestAlertSound.clicked.connect(self.test_alert_sound)
 
         self.btnSave.clicked.connect(self.save)
+        self.btnCancel.clicked.connect(self.close)
 
         self.load()
 
@@ -233,6 +240,10 @@ class SettingWindow(QtWidgets.QWidget):
         settings.update(values)
         settings.save()
         self.close()
+        
+    def close(self):
+        self.CLOSE.emit()
+        super().close()
 
     def set_ih_folder(self):
         folder = str(QFileDialog.getExistingDirectory(self, "Select Directory"))

@@ -54,6 +54,9 @@ class Notification(threading.Thread):
         self.on_complete()
 
     def playsound(self):
+        if self._sound is None:
+            return
+
         playsound(self._sound)
 
     def say_last_3_char(self):

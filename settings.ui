@@ -119,7 +119,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineWait"/>
+        <widget class="QSpinBox" name="spinWait"/>
        </item>
        <item>
         <widget class="QPushButton" name="pushTestAlertSound">

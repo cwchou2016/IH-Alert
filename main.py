@@ -234,22 +234,26 @@ class SettingWindow(QtWidgets.QWidget):
 
     def set_ih_folder(self):
         folder = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
-        self.lineIhFolder.setText(folder)
+        if folder != "":
+            self.lineIhFolder.setText(folder)
         self.update()
 
     def set_lis_folder(self):
         folder = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
-        self.lineLisFolder.setText(folder)
+        if folder != "":
+            self.lineLisFolder.setText(folder)
         self.update()
 
     def set_complete_sound(self):
         file = QFileDialog.getOpenFileName(self, "Select File", "*.mp3")[0]
-        self.lineCompleteSound.setText(file)
+        if file != "":
+            self.lineCompleteSound.setText(file)
         self.update()
 
     def set_alert_sound(self):
         file = QFileDialog.getOpenFileName(self, "Select File")[0]
-        self.lineAlertSound.setText(file)
+        if file != "":
+            self.lineAlertSound.setText(file)
         self.update()
 
 

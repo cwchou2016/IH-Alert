@@ -192,6 +192,8 @@ class SettingWindow(QtWidgets.QWidget):
         self.btnCompleteSoundSelector.clicked.connect(self.set_complete_sound)
         self.btnAlertSoundSelector.clicked.connect(self.set_alert_sound)
 
+        self.btnSave.clicked.connect(self.save)
+
         self.load()
 
     def load(self):
@@ -206,7 +208,21 @@ class SettingWindow(QtWidgets.QWidget):
                 item.setValue(int(settings.get(opt)))
 
     def save(self):
-        pass
+        settings =Settings("config.ini")
+
+        values = {}
+
+        for opt in self._settings.keys():
+            option = self._settings[opt]
+            if type(option) is QtWidgets.QLineEdit:
+                values[opt] = option.text()
+
+            elif type(option) is QtWidgets.QSpinBox:
+                values[opt] = str(option.value())
+
+        settings.update(values)
+        settings.save()
+        self.close()
 
     def set_ih_folder(self):
         folder = str(QFileDialog.getExistingDirectory(self, "Select Directory"))

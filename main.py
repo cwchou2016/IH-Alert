@@ -1,7 +1,6 @@
 import os
 import sys
 
-
 from PySide2 import QtWidgets
 from PySide2.QtCore import QThread, Signal, QObject, QCoreApplication, Qt
 from time import sleep
@@ -200,6 +199,9 @@ class SettingWindow(QtWidgets.QWidget):
         self.btnCompleteSoundSelector.clicked.connect(self.set_complete_sound)
         self.btnAlertSoundSelector.clicked.connect(self.set_alert_sound)
 
+        self.pushTestCompleteSound.clicked.connect(self.test_complete_sound)
+        self.pushTestAlertSound.clicked.connect(self.test_alert_sound)
+
         self.btnSave.clicked.connect(self.save)
 
         self.load()
@@ -216,7 +218,7 @@ class SettingWindow(QtWidgets.QWidget):
                 item.setValue(int(settings.get(opt)))
 
     def save(self):
-        settings =Settings("config.ini")
+        settings = Settings("config.ini")
 
         values = {}
 
@@ -255,6 +257,12 @@ class SettingWindow(QtWidgets.QWidget):
         if file != "":
             self.lineAlertSound.setText(file)
         self.update()
+
+    def test_complete_sound(self):
+        alert.Alert("", audio_file=self.lineCompleteSound.text(), delay=0).start()
+
+    def test_alert_sound(self):
+        alert.Alert("", audio_file=self.lineAlertSound.text(), delay=0).start()
 
 
 if __name__ == "__main__":

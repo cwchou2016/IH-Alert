@@ -173,10 +173,13 @@ class IhFolderHandler(FileSystemEventHandler):
 
         if os.path.basename(dir_folder) != "Results":
             return
-
+        sample = SampleTest("unknown", [])
         _, ext = os.path.splitext(f_name)
         if ext.lower() == ".xml":
-            sample = SampleTest.read_xml(event.src_path)
+            try:
+                sample = SampleTest.read_xml(event.src_path)
+            except Exception as e:
+                print(e)
             print(datetime.now(), sample.sample_id, sample.assays, os.path.getsize(event.src_path))
 
             if sample.sample_id in self.notifications:
@@ -189,7 +192,10 @@ class IhFolderHandler(FileSystemEventHandler):
                 self.add_notification(sample.sample_id, notification)
 
         elif ext.lower() == ".upl":
-            sample = SampleTest.read_upl(event.src_path)
+            try:
+                sample = SampleTest.read_upl(event.src_path)
+            except Exception as e:
+                print(e)
             print(datetime.now(), sample.sample_id, sample.assays)
 
             if sample.sample_id not in self.notifications:

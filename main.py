@@ -51,15 +51,23 @@ class IhFolderHandler(alert.IhFolderHandler, QObject):
         if os.path.basename(dir_folder) != "Results":
             return
 
+        sample = alert.SampleTest("unknown", [])
+
         _, ext = os.path.splitext(f_name)
         if ext.lower() == ".xml":
-            sample = alert.SampleTest.read_xml(event.src_path)
+            try:
+                sample = alert.SampleTest.read_xml(event.src_path)
+            except Exception as e:
+                print(e)
 
             # result is received
             self.RECEIVED.emit(sample)
 
         elif ext.lower() == ".upl":
-            sample = alert.SampleTest.read_upl(event.src_path)
+            try:
+                sample = alert.SampleTest.read_upl(event.src_path)
+            except Exception as e:
+                print(e)
 
             # result is confirmed
             self.CONFIRMED.emit(sample)
@@ -133,7 +141,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_status_bar("Starting")
         if self._watch is not None:
             self.btn_stop_clicked()
-
 
         config = Settings("config.ini")
         self._watch = WatchFolder(config)
@@ -240,7 +247,7 @@ class SettingWindow(QtWidgets.QWidget):
         settings.update(values)
         settings.save()
         self.close()
-        
+
     def close(self):
         self.CLOSE.emit()
         super().close()

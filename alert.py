@@ -180,7 +180,7 @@ class IhFolderHandler(FileSystemEventHandler):
                 sample = SampleTest.read_xml(event.src_path)
             except Exception as e:
                 print(e)
-            print(datetime.now(), sample.sample_id, sample.assays, os.path.getsize(event.src_path))
+            print(datetime.now(), sample.sample_id, sample.assays)
 
             if sample.sample_id in self.notifications:
                 print(f"{sample.sample_id} has been registered!")

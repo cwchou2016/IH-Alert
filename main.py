@@ -1,12 +1,12 @@
 import os
 import sys
 
-from PySide2 import QtWidgets
-from PySide2.QtCore import QThread, Signal, QObject, QCoreApplication, Qt
+from PySide6 import QtWidgets
+from PySide6.QtCore import QThread, Signal, QObject, QCoreApplication, Qt
 from time import sleep
 from datetime import timedelta, datetime
 
-from PySide2.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QFileDialog
 
 import alert
 from settings import Settings
@@ -288,4 +288,4 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

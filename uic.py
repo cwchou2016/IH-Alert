@@ -39,9 +39,9 @@ from __future__ import (print_function, division, unicode_literals,
 import os
 import sys
 
-from PySide2.QtCore import Slot, QMetaObject
-from PySide2.QtUiTools import QUiLoader
-from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
+from PySide6.QtCore import Slot, QMetaObject
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 SCRIPT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 

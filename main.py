@@ -120,10 +120,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         super().update()
 
-    def close(self):
+    def closeEvent(self, event):
         if self._watch.isRunning():
             self._watch.stop()
-        super().close()
+            self._watch.wait()
+        super().closeEvent(event)
 
 
 class SettingWindow(QtWidgets.QWidget):
@@ -187,9 +188,9 @@ class SettingWindow(QtWidgets.QWidget):
         settings.save()
         self.close()
 
-    def close(self):
+    def closeEvent(self, event):
         self.CLOSE.emit()
-        super().close()
+        super().closeEvent(event)
 
     def set_ih_folder(self):
         folder = str(QFileDialog.getExistingDirectory(self, "Select Directory"))

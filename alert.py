@@ -3,6 +3,7 @@ import subprocess
 import threading
 import os
 
+from PySide6.QtCore import QObject, Signal
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from datetime import datetime
@@ -121,8 +122,49 @@ class ObserveCenter(Observer):
         return (datetime.now() - self._start_time).seconds
 
 
-class LisFolderHandler(FileSystemEventHandler):
+class SampleTest:
+    """
+    Store information of samples,
+    including sample numbers and assays used in the tests
+    """
+
+    def __init__(self, sample_number: str, assays: list[str]):
+        self._id = sample_number
+        self._assays = assays
+
+    @classmethod
+    def read_xml(cls, file):
+        res = XmlResult.read_file(file)
+        return SampleTest(res.sample_id, res.assays)
+
+    @classmethod
+    def read_upl(cls, file):
+        sample_id, assays = None, []
+        with open(file, "r") as f:
+            for line in f.readlines():
+                l = line.split("|")
+                if l[0] == "P":
+                    sample_id = l[3]
+
+                if l[0] == "O":
+                    assays.append(l[4].strip("^"))
+
+        return SampleTest(sample_id, assays)
+
+    @property
+    def sample_id(self):
+        return self._id
+
+    @property
+    def assays(self):
+        return self._assays
+
+
+class LisFolderHandler(FileSystemEventHandler, QObject):
+    DELETED = Signal(SampleTest)
+
     def __init__(self, *, audio_file=None, backup_folder="backup/", delay=0):
+        QObject.__init__(self)
         self._audio = audio_file
         self._backup_folder = backup_folder
         self._delay = delay
@@ -140,13 +182,13 @@ class LisFolderHandler(FileSystemEventHandler):
         _, ext = os.path.splitext(f_name)
 
         if ext.lower() == ".upl":
-            sample_id = " "
+            sample = SampleTest("Unknown", [])
             try:
-                sample_id = SampleTest.read_upl(os.path.join(self._backup_folder, f_name)).sample_id
+                sample = SampleTest.read_upl(os.path.join(self._backup_folder, f_name))
             except Exception as e:
                 print(e)
-
-            Notification(sample_id, audio_file=self._audio, delay=self._delay).start()
+            self.DELETED.emit(sample)
+            Notification(sample.sample_id, audio_file=self._audio, delay=self._delay).start()
 
     def on_modified(self, event):
         if event.is_directory:
@@ -157,8 +199,12 @@ class LisFolderHandler(FileSystemEventHandler):
         shutil.copy(event.src_path, os.path.join(self._backup_folder, f_name))
 
 
-class IhFolderHandler(FileSystemEventHandler):
+class IhFolderHandler(FileSystemEventHandler, QObject):
+    RECEIVED = Signal(SampleTest)
+    CONFIRMED = Signal(SampleTest)
+
     def __init__(self, *, audio_file=None, delay=10):
+        QObject.__init__(self)
         self._notifications = {}
         self._audio = audio_file
         self._delay = delay
@@ -186,6 +232,8 @@ class IhFolderHandler(FileSystemEventHandler):
                 print(f"{sample.sample_id} has been registered!")
                 return
 
+            self.RECEIVED.emit(sample)
+
             if "PR15B" in sample.assays:
                 notification = Alert(sample.sample_id, audio_file=self._audio, delay=self._delay)
                 notification.start()
@@ -197,6 +245,8 @@ class IhFolderHandler(FileSystemEventHandler):
             except Exception as e:
                 print(e)
             print(datetime.now(), sample.sample_id, sample.assays)
+
+            self.CONFIRMED.emit(sample)
 
             if sample.sample_id not in self.notifications:
                 print(f"{sample.sample_id} is not registered!")
@@ -250,44 +300,6 @@ class XmlResult:
     @property
     def assays(self):
         return [self.data['RESULT']['RESULT']['AssayCode']]
-
-
-class SampleTest:
-    """
-    Store information of samples,
-    including sample numbers and assays used in the tests
-    """
-
-    def __init__(self, sample_number: str, assays: list[str]):
-        self._id = sample_number
-        self._assays = assays
-
-    @classmethod
-    def read_xml(cls, file):
-        res = XmlResult.read_file(file)
-        return SampleTest(res.sample_id, res.assays)
-
-    @classmethod
-    def read_upl(cls, file):
-        sample_id, assays = None, []
-        with open(file, "r") as f:
-            for line in f.readlines():
-                l = line.split("|")
-                if l[0] == "P":
-                    sample_id = l[3]
-
-                if l[0] == "O":
-                    assays.append(l[4].strip("^"))
-
-        return SampleTest(sample_id, assays)
-
-    @property
-    def sample_id(self):
-        return self._id
-
-    @property
-    def assays(self):
-        return self._assays
 
 
 if __name__ == "__main__":

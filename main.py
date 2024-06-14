@@ -1,8 +1,7 @@
-import os
 import sys
 
 from PySide6 import QtWidgets
-from PySide6.QtCore import QThread, Signal, QObject, QCoreApplication, Qt
+from PySide6.QtCore import QThread, Signal, QCoreApplication, Qt
 from time import sleep
 from datetime import timedelta, datetime
 
@@ -11,66 +10,6 @@ from PySide6.QtWidgets import QFileDialog
 import alert
 from settings import Settings
 from uic import loadUi
-
-
-class LisFolderHandler(alert.LisFolderHandler, QObject):
-    DELETED = Signal(alert.SampleTest)
-
-    def __init__(self, audio_file, delay):
-        alert.LisFolderHandler.__init__(self, audio_file=audio_file, delay=delay)
-        QObject.__init__(self)
-
-    def on_deleted(self, event):
-        _, f_name = os.path.split(event.src_path)
-        _, ext = os.path.splitext(f_name)
-
-        if ext.lower() == ".upl":
-            sample = alert.SampleTest("unknown", [])
-            try:
-                sample = alert.SampleTest.read_upl(os.path.join(self._backup_folder, f_name))
-            except Exception as e:
-                print(e)
-
-        self.DELETED.emit(sample)
-        super().on_deleted(event)
-
-
-class IhFolderHandler(alert.IhFolderHandler, QObject):
-    RECEIVED = Signal(alert.SampleTest)
-    CONFIRMED = Signal(alert.SampleTest)
-
-    def __init__(self, audio_file, delay):
-        alert.IhFolderHandler.__init__(self, audio_file=audio_file, delay=delay)
-        QObject.__init__(self)
-
-    def on_modified(self, event):
-        super().on_modified(event)
-
-        dir_folder, f_name = os.path.split(event.src_path)
-
-        if os.path.basename(dir_folder) != "Results":
-            return
-
-        sample = alert.SampleTest("unknown", [])
-
-        _, ext = os.path.splitext(f_name)
-        if ext.lower() == ".xml":
-            try:
-                sample = alert.SampleTest.read_xml(event.src_path)
-            except Exception as e:
-                print(e)
-
-            # result is received
-            self.RECEIVED.emit(sample)
-
-        elif ext.lower() == ".upl":
-            try:
-                sample = alert.SampleTest.read_upl(event.src_path)
-            except Exception as e:
-                print(e)
-
-            # result is confirmed
-            self.CONFIRMED.emit(sample)
 
 
 class WatchFolder(QThread):
@@ -86,9 +25,9 @@ class WatchFolder(QThread):
     def run(self):
         self._running = True
         ob = alert.ObserveCenter()
-        lis_handler = LisFolderHandler(audio_file=self._config.get("complete_sound"), delay=0)
+        lis_handler = alert.LisFolderHandler(audio_file=self._config.get("complete_sound"), delay=0)
         lis_handler.DELETED.connect(self.on_lis_complete)
-        ih_handler = IhFolderHandler(audio_file=self._config.get("alert_sound"), delay=60)
+        ih_handler = alert.IhFolderHandler(audio_file=self._config.get("alert_sound"), delay=60)
         ih_handler.RECEIVED.connect(self.on_received)
         ih_handler.CONFIRMED.connect(self.on_confirmed)
         ob.schedule(lis_handler, self._config.get("lis_folder"), False)

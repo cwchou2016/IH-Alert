@@ -200,19 +200,23 @@ class IhFolderHandler(FileSystemEventHandler, QObject):
         self._notifications = {}
         self._audio = audio_file
         self._delay = delay
+        self._last_modified = None
 
     def on_modified(self, event):
+        if self._last_modified == event.src_path:
+            return
         if event.is_directory:
             return
 
+        self._last_modified = event.src_path
+
         print(f"{datetime.now()}: Modified {event.src_path}")
 
-        dir_folder, f_name = os.path.split(event.src_path)
-
-        if os.path.basename(dir_folder) != "Results":
+        if not self.is_target_files(event.src_path):
             return
+
         sample = SampleTest("unknown", [])
-        _, ext = os.path.splitext(f_name)
+        _, ext = os.path.splitext(event.src_path)
         if ext.lower() == ".xml":
             try:
                 sample = SampleTest.read_xml(event.src_path)
@@ -246,6 +250,18 @@ class IhFolderHandler(FileSystemEventHandler, QObject):
 
             if "PR15B" in sample.assays:
                 self.remove_notification(sample.sample_id)
+
+    def is_target_files(self, file):
+        dir_folder, f_name = os.path.split(file)
+        parent_folder = os.path.dirname(dir_folder)
+
+        if os.path.basename(dir_folder) != "Backup":
+            return False
+
+        if os.path.basename(parent_folder) != "Results":
+            return False
+
+        return True
 
     @property
     def notifications(self):
@@ -300,9 +316,9 @@ if __name__ == "__main__":
     settings = Settings("config.ini")
 
     observer = ObserveCenter()
-    ih_handler = IhFolderHandler(audio_file=settings.get("alert_sound"), delay=int(settings.get("alert_wait")))
+    ih_handler = IhFolderHandler(audio_file=settings.get("alert_sound"), delay=int(10))
     lis_handler = LisFolderHandler(audio_file=settings.get("complete_sound"))
-    observer.schedule(ih_handler, settings.get("ih_folder"), False)
+    observer.schedule(ih_handler, settings.get("ih_folder"), True)
     observer.schedule(lis_handler, settings.get("lis_folder"), False)
     observer.start()
     try:

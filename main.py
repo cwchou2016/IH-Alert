@@ -172,11 +172,11 @@ class SettingWindow(QtWidgets.QWidget):
 
         for opt in settings.get_values().keys():
             item = self._settings[opt]
-            if type(item) is QtWidgets.QLineEdit:
-                item.setText(settings.get(opt))
-
-            if type(item) is QtWidgets.QSpinBox:
-                item.setValue(int(settings.get(opt)))
+            match type(item):
+                case QtWidgets.QLineEdit:
+                    item.setText(settings.get(opt))
+                case QtWidgets.QSpinBox:
+                    item.setValue(int(settings.get(opt)))
 
     def save(self):
         settings = Settings("config.ini")
@@ -185,19 +185,19 @@ class SettingWindow(QtWidgets.QWidget):
 
         for opt in self._settings.keys():
             option = self._settings[opt]
-            if type(option) is QtWidgets.QLineEdit:
-                values[opt] = option.text()
-
-            elif type(option) is QtWidgets.QSpinBox:
-                values[opt] = str(option.value())
-
-            elif type(option) is list:
-                if type(option[0]) is QtWidgets.QCheckBox:
-                    check_values = [str(int(c.isChecked())) for c in option]
-                    values[opt] = ",".join(check_values)
-                elif type(option[0]) is QtWidgets.QTimeEdit:
-                    time_values = [f"{t.time().hour()}:{t.time().minute()}" for t in option]
-                    values[opt] = ",".join(time_values)
+            match type(option):
+                case QtWidgets.QLineEdit:
+                    values[opt] = option.text()
+                case QtWidgets.QSpinBox:
+                    values[opt] = str(option.value())
+                case list:
+                    match type(option[0]):
+                        case QtWidgets.QCheckBox:
+                            check_values = [str(int(c.isChecked())) for c in option]
+                            values[opt] = ",".join(check_values)
+                        case QtWidgets.QTimeEdit:
+                            time_values = [f"{t.time().hour()}:{t.time().minute()}" for t in option]
+                            values[opt] = ",".join(time_values)
 
         settings.update(values)
         settings.save()

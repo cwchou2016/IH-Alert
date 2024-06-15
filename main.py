@@ -134,6 +134,11 @@ class SettingWindow(QtWidgets.QWidget):
         super().__init__(parent)
         loadUi("settings.ui", self)
 
+        self.times = [TimeEdit(self) for _ in range(3)]
+        layout = QtWidgets.QHBoxLayout(self.time_widget)
+        for te in self.times:
+            layout.addWidget(te)
+
         self._settings = {
             "ih_folder": self.lineIhFolder,
             "lis_folder": self.lineLisFolder,
@@ -250,6 +255,6 @@ class TimeEdit(QtWidgets.QWidget):
 if __name__ == "__main__":
     QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication(sys.argv)
-    window = TimeEdit()
+    window = SettingWindow()
     window.show()
     sys.exit(app.exec())

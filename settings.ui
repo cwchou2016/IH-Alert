@@ -126,6 +126,9 @@
            <height>0</height>
           </size>
          </property>
+         <property name="maximum">
+          <number>9999</number>
+         </property>
         </widget>
        </item>
        <item>
@@ -144,7 +147,11 @@
       </layout>
      </item>
      <item>
-      <widget class="QWidget" name="widget_3" native="true"/>
+      <widget class="QGroupBox" name="time_widget">
+       <property name="title">
+        <string>Auto terminate</string>
+       </property>
+      </widget>
      </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_5">

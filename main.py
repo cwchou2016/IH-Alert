@@ -1,7 +1,7 @@
 import sys
 
 from PySide6 import QtWidgets
-from PySide6.QtCore import QThread, Signal, QCoreApplication, Qt
+from PySide6.QtCore import QThread, Signal, QCoreApplication, Qt, QTime
 from time import sleep
 from datetime import timedelta, datetime
 
@@ -10,6 +10,11 @@ from PySide6.QtWidgets import QFileDialog
 import alert
 from settings import Settings
 from uic import loadUi
+
+
+def to_qtime(str_time):
+    h, m = str_time.split(":")
+    return QTime(int(h), int(m))
 
 
 class WatchFolder(QThread):
@@ -177,6 +182,20 @@ class SettingWindow(QtWidgets.QWidget):
                     item.setText(settings.get(opt))
                 case QtWidgets.QSpinBox:
                     item.setValue(int(settings.get(opt)))
+                case list:
+                    match type(item[0]):
+                        case QtWidgets.QCheckBox:
+                            check_values = settings.get(opt).split(",")
+                            check_values = [bool(int(c)) for c in check_values]
+                            for i, c in zip(item, check_values):
+                                i.setChecked(c)
+
+                        case QtWidgets.QTimeEdit:
+                            time_values = settings.get(opt).split(",")
+                            time_values = [to_qtime(t) for t in time_values]
+                            for i, t in zip(item, time_values):
+                                i.setTime(t)
+                            print(time_values)
 
     def save(self):
         settings = Settings("config.ini")

@@ -144,7 +144,9 @@ class SettingWindow(QtWidgets.QWidget):
             "lis_folder": self.lineLisFolder,
             "complete_sound": self.lineCompleteSound,
             "alert_sound": self.lineAlertSound,
-            "alert_wait": self.spinWait
+            "alert_wait": self.spinWait,
+            "termination_time": [t.time for t in self.times],
+            "termination_enable": [t.checkbox for t in self.times],
         }
 
         self.lineIhFolder.setReadOnly(True)
@@ -250,6 +252,14 @@ class TimeEdit(QtWidgets.QWidget):
         else:
             self.time_edit.setDisabled(True)
         super().update()
+
+    @property
+    def time(self):
+        return self.time_edit
+
+    @property
+    def checkbox(self):
+        return self.enabled
 
 
 if __name__ == "__main__":

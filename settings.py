@@ -7,24 +7,22 @@ class Settings:
         self._f_name = f_name
         self._config = ConfigParser()
         self._config.add_section("setting")
-        self._options = ["ih_folder",
-                         "lis_folder",
-                         "complete_sound",
-                         "alert_sound",
-                         "alert_wait"]
-        self.reset()
-        self.load()
-
-    def reset(self) -> None:
-        init_values = {
+        self._init_values = {
             "ih_folder": "",
             "lis_folder": "",
             "complete_sound": "audio/complete.mp3",
             "alert_sound": "audio/alert.mp3",
-            "alert_wait": "60"
+            "alert_wait": "60",
+            "termination_time": "",
+            "termination_enable": "0,0,0",
         }
+        self._options = self._init_values.keys()
 
-        self.update(init_values)
+        self.reset()
+        self.load()
+
+    def reset(self) -> None:
+        self.update(self._init_values)
 
     def load(self) -> None:
         if not path.isfile(self._f_name):
@@ -55,7 +53,4 @@ class Settings:
 
 
 if __name__ == "__main__":
-    s = Settings("config.ini")
-    s.load()
-    s.save()
-    print(s.get("ih_folder"))
+    pass

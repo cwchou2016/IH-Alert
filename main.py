@@ -223,9 +223,24 @@ class SettingWindow(QtWidgets.QWidget):
         alert.Alert("", audio_file=self.lineAlertSound.text(), delay=0).start()
 
 
+class TimeEdit(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.time_edit = QtWidgets.QTimeEdit(self)
+        self.time_edit.setDisplayFormat("hh:mm")
+
+        self.enabled = QtWidgets.QCheckBox(self)
+        self.enabled.setMaximumWidth(30)
+
+        self.layout = QtWidgets.QHBoxLayout(self)
+        self.layout.addWidget(self.enabled)
+        self.layout.addWidget(self.time_edit)
+        self.enabled.clicked.connect(self.update)
+
+
 if __name__ == "__main__":
     QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication(sys.argv)
-    window = MainWindow()
+    window = TimeEdit()
     window.show()
     sys.exit(app.exec())

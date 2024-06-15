@@ -237,6 +237,15 @@ class TimeEdit(QtWidgets.QWidget):
         self.layout.addWidget(self.time_edit)
         self.enabled.clicked.connect(self.update)
 
+        self.update()
+
+    def update(self):
+        if self.enabled.isChecked():
+            self.time_edit.setDisabled(False)
+        else:
+            self.time_edit.setDisabled(True)
+        super().update()
+
 
 if __name__ == "__main__":
     QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)

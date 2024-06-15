@@ -163,40 +163,32 @@ class SampleTest:
 class LisFolderHandler(FileSystemEventHandler, QObject):
     DELETED = Signal(SampleTest)
 
-    def __init__(self, *, audio_file=None, backup_folder="backup/", delay=0):
+    def __init__(self, *, audio_file=None, delay=0):
         QObject.__init__(self)
         self._audio = audio_file
-        self._backup_folder = backup_folder
         self._delay = delay
+        self._last_modified = None
 
-        if not os.path.isdir(self._backup_folder):
-            os.mkdir(self._backup_folder)
-
-    def on_deleted(self, event):
+    def on_modified(self, event):
+        if self._last_modified == event.src_path:
+            return
         if event.is_directory:
             return
 
-        print(f"{datetime.now()}: Deleted {event.src_path}")
+        self._last_modified = event.src_path
 
+        print(f"{datetime.now()}: Modified {event.src_path}")
         _, f_name = os.path.split(event.src_path)
         _, ext = os.path.splitext(f_name)
 
         if ext.lower() == ".upl":
             sample = SampleTest("Unknown", [])
             try:
-                sample = SampleTest.read_upl(os.path.join(self._backup_folder, f_name))
+                sample = SampleTest.read_upl(event.src_path)
             except Exception as e:
                 print(e)
             self.DELETED.emit(sample)
             Notification(sample.sample_id, audio_file=self._audio, delay=self._delay).start()
-
-    def on_modified(self, event):
-        if event.is_directory:
-            return
-
-        print(f"{datetime.now()}: Modified {event.src_path}")
-        _, f_name = os.path.split(event.src_path)
-        shutil.copy(event.src_path, os.path.join(self._backup_folder, f_name))
 
 
 class IhFolderHandler(FileSystemEventHandler, QObject):

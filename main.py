@@ -191,6 +191,14 @@ class SettingWindow(QtWidgets.QWidget):
             elif type(option) is QtWidgets.QSpinBox:
                 values[opt] = str(option.value())
 
+            elif type(option) is list:
+                if type(option[0]) is QtWidgets.QCheckBox:
+                    check_values = [str(int(c.isChecked())) for c in option]
+                    values[opt] = ",".join(check_values)
+                elif type(option[0]) is QtWidgets.QTimeEdit:
+                    time_values = [f"{t.time().hour()}:{t.time().minute()}" for t in option]
+                    values[opt] = ",".join(time_values)
+
         settings.update(values)
         settings.save()
         self.close()

@@ -41,7 +41,7 @@ class WatchFolder(QThread):
         ih_handler = alert.IhFolderHandler(audio_file=self._config.get("alert_sound"), delay=60)
         ih_handler.RECEIVED.connect(self.on_received)
         ih_handler.CONFIRMED.connect(self.on_confirmed)
-        ob.schedule(lis_handler, self._config.get("lis_folder"), False)
+        ob.schedule(lis_handler, self._config.get("lis_folder"), True)
         ob.schedule(ih_handler, self._config.get("ih_folder"), True)
         ob.start()
         while self._running:
@@ -71,7 +71,6 @@ class WatchFolder(QThread):
         now = datetime.now().time()
 
         for t1, t2 in zip(self._time_start, self._time_end):
-            print(now, t1, t2)
             if (now > t1.time()) and (now < t2.time()):
                 return True
 

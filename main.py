@@ -1,7 +1,7 @@
 import sys
 
 from PySide6 import QtWidgets
-from PySide6.QtCore import QThread, Signal, QCoreApplication, Qt, QTime
+from PySide6.QtCore import QThread, Signal, QCoreApplication, Qt, QTime, QSystemSemaphore, QSharedMemory
 from time import sleep
 from datetime import timedelta, datetime
 
@@ -327,9 +327,46 @@ class TimeEdit(QtWidgets.QWidget):
         return self.enabled
 
 
-if __name__ == "__main__":
+def single_launch():
     QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
-    app = QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)  # create app instance at top, to able to show QMessageBox is required
+    window_id = 'pingidapplication'
+    shared_mem_id = 'pingidsharedmem'
+    semaphore = QSystemSemaphore(window_id, 1)
+    semaphore.acquire()  # Raise the semaphore, barring other instances to work with shared memory
+
+    if sys.platform != 'win32':
+        # in linux / unix shared memory is not freed when the application terminates abnormally,
+        # so you need to get rid of the garbage
+        nix_fix_shared_mem = QSharedMemory(shared_mem_id)
+        if nix_fix_shared_mem.attach():
+            nix_fix_shared_mem.detach()
+
+    shared_memory = QSharedMemory(shared_mem_id)
+
+    if shared_memory.attach():  # attach a copy of the shared memory, if successful, the application is already running
+        is_running = True
+    else:
+        shared_memory.create(1)  # allocate a shared memory block of 1 byte
+        is_running = False
+
+    semaphore.release()
+
+    if is_running:  # if the application is already running, show the warning message
+        QtWidgets.QMessageBox.warning(None, 'Application already running',
+                                      'The application is already running.')
+        return
+
+    # normal process of creating & launching MainWindow
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    # QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
+    # app = QtWidgets.QApplication(sys.argv)
+    # window = MainWindow()
+    # window.show()
+    # sys.exit(app.exec())
+    single_launch()

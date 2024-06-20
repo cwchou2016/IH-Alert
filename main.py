@@ -17,6 +17,11 @@ def to_qtime(str_time):
     return QTime(int(h), int(m))
 
 
+def to_datetime(str_time):
+    h, m = str_time.split(":")
+    return datetime(year=2000, month=1, day=1, hour=int(h), minute=int(m))
+
+
 class WatchFolder(QThread):
     WATCHING = Signal(str)
     FINISHED = Signal(str)
@@ -26,6 +31,7 @@ class WatchFolder(QThread):
         super().__init__()
         self._running = False
         self._config = config
+        self._time_start, self._time_end = self.get_timer()
 
     def run(self):
         self._running = True
@@ -40,12 +46,36 @@ class WatchFolder(QThread):
         ob.start()
         while self._running:
             self.WATCHING.emit(f"Running time: {timedelta(seconds=ob.get_run_time())}")
+            if self.to_terminate():
+                self.stop()
             sleep(1)
 
         ob.stop()
         ob.join()
 
         self.FINISHED.emit("Stopped")
+
+    def get_timer(self):
+        t_time = self._config.get("termination_time").split(",")
+        t_enable = self._config.get("termination_enable").split(",")
+ 
+        time_start = []
+        for e, t in zip(t_enable, t_time):
+            if bool(int(e)):
+                time_start.append(to_datetime(t))
+        time_end = [t + timedelta(seconds=3) for t in time_start]
+
+        return time_start, time_end
+
+    def to_terminate(self):
+        now = datetime.now().time()
+
+        for t1, t2 in zip(self._time_start, self._time_end):
+            print(now, t1, t2)
+            if (now > t1.time()) and (now < t2.time()):
+                return True
+
+        return False
 
     def stop(self):
         self._running = False
@@ -195,7 +225,6 @@ class SettingWindow(QtWidgets.QWidget):
                             time_values = [to_qtime(t) for t in time_values]
                             for i, t in zip(item, time_values):
                                 i.setTime(t)
-                            print(time_values)
 
     def save(self):
         settings = Settings("config.ini")
@@ -292,6 +321,6 @@ class TimeEdit(QtWidgets.QWidget):
 if __name__ == "__main__":
     QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication(sys.argv)
-    window = SettingWindow()
+    window = MainWindow()
     window.show()
     sys.exit(app.exec())

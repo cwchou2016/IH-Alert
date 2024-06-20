@@ -26,6 +26,7 @@ class WatchFolder(QThread):
     WATCHING = Signal(str)
     FINISHED = Signal(str)
     NOTIFY = Signal(str)
+    QUIT = Signal()
 
     def __init__(self, config):
         super().__init__()
@@ -48,6 +49,7 @@ class WatchFolder(QThread):
             self.WATCHING.emit(f"Running time: {timedelta(seconds=ob.get_run_time())}")
             if self.to_terminate():
                 self.stop()
+                self.QUIT.emit()
             sleep(1)
 
         ob.stop()
@@ -122,6 +124,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._watch.FINISHED.connect(self.update_event_log)
         self._watch.FINISHED.connect(self.update_status_bar)
         self._watch.NOTIFY.connect(self.update_event_log)
+        self._watch.QUIT.connect(self.close)
         self._watch.start()
         self.update_event_log("Notification is running")
 

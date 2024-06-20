@@ -58,7 +58,7 @@ class WatchFolder(QThread):
     def get_timer(self):
         t_time = self._config.get("termination_time").split(",")
         t_enable = self._config.get("termination_enable").split(",")
- 
+
         time_start = []
         for e, t in zip(t_enable, t_time):
             if bool(int(e)):
@@ -94,6 +94,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         loadUi("mainWindow.ui", self)
+        self.setWindowTitle("IH-Alert")
 
         self._watch = None
 
@@ -149,9 +150,11 @@ class MainWindow(QtWidgets.QMainWindow):
         elif self._watch.isRunning():
             self.pushButton_start.hide()
             self.pushButton_stop.show()
+            self.setWindowTitle("IH-Alert Running")
         else:
             self.pushButton_start.show()
             self.pushButton_stop.hide()
+            self.setWindowTitle("IH-Alert Stopped")
 
         super().update()
 
@@ -168,6 +171,7 @@ class SettingWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         loadUi("settings.ui", self)
+        self.setWindowTitle("Settings")
 
         self.times = [TimeEdit(self) for _ in range(3)]
         layout = QtWidgets.QHBoxLayout(self.time_widget)
@@ -201,6 +205,12 @@ class SettingWindow(QtWidgets.QWidget):
         self.btnCancel.clicked.connect(self.close)
 
         self.load()
+        self.update()
+
+    def update(self):
+        for t in self.times:
+            t.update()
+        super().update()
 
     def load(self):
         settings = Settings("config.ini")

@@ -13,7 +13,7 @@ class Settings:
             "complete_sound": "audio/complete.mp3",
             "alert_sound": "audio/alert.mp3",
             "alert_wait": "60",
-            "termination_time": "",
+            "termination_time": "0:0,0:0,0:0",
             "termination_enable": "0,0,0",
         }
         self._options = self._init_values.keys()

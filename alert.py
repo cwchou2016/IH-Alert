@@ -162,6 +162,7 @@ class SampleTest:
 
 class LisFolderHandler(FileSystemEventHandler, QObject):
     DELETED = Signal(SampleTest)
+    ERROR = Signal(str)
 
     def __init__(self, *, audio_file=None, delay=0):
         QObject.__init__(self)
@@ -186,14 +187,22 @@ class LisFolderHandler(FileSystemEventHandler, QObject):
             try:
                 sample = SampleTest.read_upl(event.src_path)
             except Exception as e:
+                self.ERROR.emit(e)
                 print(e)
+
             self.DELETED.emit(sample)
-            Notification(sample.sample_id, audio_file=self._audio, delay=self._delay).start()
+
+            try:
+                Notification(sample.sample_id, audio_file=self._audio, delay=self._delay).start()
+            except Exception as e:
+                self.ERROR.emit(e)
+                print(e)
 
 
 class IhFolderHandler(FileSystemEventHandler, QObject):
     RECEIVED = Signal(SampleTest)
     CONFIRMED = Signal(SampleTest)
+    ERROR = Signal(str)
 
     def __init__(self, *, audio_file=None, delay=10):
         QObject.__init__(self)
@@ -221,6 +230,7 @@ class IhFolderHandler(FileSystemEventHandler, QObject):
             try:
                 sample = SampleTest.read_xml(event.src_path)
             except Exception as e:
+                self.ERROR.emit(e)
                 print(e)
             print(datetime.now(), sample.sample_id, sample.assays)
 
@@ -231,14 +241,19 @@ class IhFolderHandler(FileSystemEventHandler, QObject):
             self.RECEIVED.emit(sample)
 
             if "PR15B" in sample.assays:
-                notification = Alert(sample.sample_id, audio_file=self._audio, delay=self._delay)
-                notification.start()
-                self.add_notification(sample.sample_id, notification)
+                try:
+                    notification = Alert(sample.sample_id, audio_file=self._audio, delay=self._delay)
+                    notification.start()
+                    self.add_notification(sample.sample_id, notification)
+                except Exception as e:
+                    print(e)
+                    self.ERROR.emit(e)
 
         elif ext.lower() == ".upl":
             try:
                 sample = SampleTest.read_upl(event.src_path)
             except Exception as e:
+                self.ERROR.emit(e)
                 print(e)
             print(datetime.now(), sample.sample_id, sample.assays)
 

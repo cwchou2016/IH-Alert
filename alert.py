@@ -275,7 +275,11 @@ class IhFolderHandler(FileSystemEventHandler, QObject):
     def get_backup_file(self, file):
         dir_folder, f_name = os.path.split(file)
 
-        return f"{dir_folder}/Backup/{f_name}"
+        backup_folder = os.path.join(dir_folder, "Backup")
+
+        for _f in os.listdir(backup_folder):
+            if f_name in _f:
+                return os.path.join(dir_folder, "Backup", _f)
 
     @property
     def notifications(self):

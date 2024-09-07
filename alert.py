@@ -278,6 +278,11 @@ class IhFolderHandler(FileSystemEventHandler, QObject):
 
         return True
 
+    def get_backup_file(self, file):
+        dir_folder, f_name = os.path.split(file)
+
+        return f"{dir_folder}/Backup/{f_name}"
+
     @property
     def notifications(self):
         self.refresh_notifications()

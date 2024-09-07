@@ -211,24 +211,22 @@ class IhFolderHandler(FileSystemEventHandler, QObject):
         self._delay = delay
         self._last_modified = None
 
-    def on_modified(self, event):
-        if self._last_modified == event.src_path:
-            return
+    def on_deleted(self, event):
         if event.is_directory:
             return
-
-        self._last_modified = event.src_path
 
         print(f"{datetime.now()}: Modified {event.src_path}")
 
         if not self.is_target_files(event.src_path):
             return
 
+        backup_file = self.get_backup_file(event.src_path)
+
         sample = SampleTest("unknown", [])
         _, ext = os.path.splitext(event.src_path)
         if ext.lower() == ".xml":
             try:
-                sample = SampleTest.read_xml(event.src_path)
+                sample = SampleTest.read_xml(backup_file)
             except Exception as e:
                 self.ERROR.emit(e)
                 print(e)
@@ -251,7 +249,7 @@ class IhFolderHandler(FileSystemEventHandler, QObject):
 
         elif ext.lower() == ".upl":
             try:
-                sample = SampleTest.read_upl(event.src_path)
+                sample = SampleTest.read_upl(backup_file)
             except Exception as e:
                 self.ERROR.emit(e)
                 print(e)
@@ -268,12 +266,8 @@ class IhFolderHandler(FileSystemEventHandler, QObject):
 
     def is_target_files(self, file):
         dir_folder, f_name = os.path.split(file)
-        parent_folder = os.path.dirname(dir_folder)
 
-        if os.path.basename(dir_folder) != "Backup":
-            return False
-
-        if os.path.basename(parent_folder) != "Results":
+        if os.path.basename(dir_folder) != "Results":
             return False
 
         return True

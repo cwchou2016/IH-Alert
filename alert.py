@@ -1,4 +1,3 @@
-import shutil
 import subprocess
 import threading
 import os
@@ -196,7 +195,7 @@ class LisFolderHandler(FileSystemEventHandler, QObject):
                 Notification(sample.sample_id, audio_file=self._audio, delay=self._delay).start()
             except Exception as e:
                 self.ERROR.emit(e)
-                print(e)
+                print(f"{sample.sample_id}, {sample.assays}, {e}")
 
 
 class IhFolderHandler(FileSystemEventHandler, QObject):

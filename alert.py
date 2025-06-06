@@ -34,8 +34,7 @@ class Notification(threading.Thread):
         self._sound = audio_file
         self._out = out_folder
 
-        if not os.path.isdir(self._out):
-            os.mkdir(self._out)
+        os.makedirs(self._out, exist_ok=True)
 
     def run(self):
 
